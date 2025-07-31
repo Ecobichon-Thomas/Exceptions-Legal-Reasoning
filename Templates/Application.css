@@ -1,0 +1,29 @@
+body {
+    background-color: rgb(247, 247, 247); /* Le fond de la page sera noir */
+    color: rgb(138, 138, 138); /* Le texte de la page sera blanc */
+    font-family: Arial;
+}
+
+h1
+{
+    background-color: rgb(138, 138, 138);
+    color: rgb(247, 247, 247);
+    font-size: 2em;
+}
+
+h1,h2,a,p
+{
+    font-family: Arial;
+}
+
+h1,h2{
+    text-align: center;
+}
+
+a{
+    color: rgb(138, 138, 138);
+}
+
+a,p{
+    text-align: justify;
+}

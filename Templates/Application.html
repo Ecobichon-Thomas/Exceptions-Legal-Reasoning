@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="utf-8">
+        <title>Handling Unexpected Exceptions in Legal Reasoning</title>
+        <link href="Application.css" rel="stylesheet">
+    </head>
+    <body>
+        <header>
+            <h1 id="ancre">Handling Unexpected Exceptions in Legal Reasoning</h1>
+        </header>
+
+        <main>
+
+        <style>
+            .api-select-container {
+                position: absolute;
+                top: 1em;
+                right: 2em;
+            }
+        </style>
+
+        <div class="api-select-container">
+            <form method="post" action="/set_api">
+                <label for="api">API :</label>
+                    <select name="api" id="api" onchange="this.form.submit()">
+                        {% for api_name in API %}
+                            <option value="{{ api_name }}" {% if api_name == selected_api %}selected{% endif %}>
+                                {{ api_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+            </form>
+        </div>
+
+        <h2>Veuillez soumettre un scénario ci-dessous:</h2>
+
+        <form method="post" action="/traiter">
+            <p>
+                <textarea name="scenario1" id="scenario1" placeholder="Votre scénario" cols = 100></textarea>
+            </p>
+            <input type="submit" value="Envoyer">
+        </form>
+
+        {% if scenario %}
+            <div id="scenario_initial">
+                <h2>Scénario :</h2>
+                <pre>{{ scenario }}</pre>
+            </div>
+        {% endif %}
+
+        {% if resultat is defined %}
+            <div id="resultat">
+                <h2>Décomposition en prémices du scénario :</h2>
+                <p>Le scénario a été découpé en prémices par le llm sélectionné. Voici la décomposition obtenue:</p>
+                <p>{{ resultat }}</p>
+            </div>
+            <p>Si cette décomposition ne vous convient pas, vous pouvez donner des indications supplémentaires ici pour que le llm améliore sa réponse:</p>
+            <form method="post" action="/traiter">
+                <input type="hidden" name="scenario" value="{{ scenario }}">
+                <input type="hidden" name="resultat" value="{{ resultat }}">
+                <p>
+                    <textarea name="complement" id="complement" placeholder="précisions pour le llm" cols = 100></textarea>
+                </p>
+                <input type="submit" value="Envoyer">
+            </form>
+        {% endif %}
+
+        {% if No_rule %}
+            <h2>Aucune règle ne s'applique au scénario fourni, veuillez ré-essayer</h2>
+        {% endif %}
+
+        {% if log %}
+            <h2>Génération d'une extension: </h2>
+            <p>Voici le déroulé de l'analyse du scénario par le système. Vous pouvez retrouver les différentes étapes de sélection des règles applicables</p>
+            <pre>{{ log }}</pre>
+        {% endif %}
+
+        {% if loop %}
+            <form id="auto-submit-form" method="post" action="/traiter">
+                <input type="hidden" name="scenario" value="{{ scenario }}">
+                <input type="hidden" name="resultat" value="{{ resultat }}">
+                <textarea name="log" style="display:none;">{{ log }}</textarea>
+            </form>
+
+            <script>
+                window.onload = function() {
+                    document.getElementById("auto-submit-form").submit();
+                };
+            </script>
+        {% endif %}
+
+        {% if conflit %}
+            <div id="choix_regle">
+                <h2>Choix de la règle à appliquer :</h2>
+                <p>Sélectionnez une règle parmi celles possibles ci-dessous:</p>
+
+                <form method="post" action="/traiter">
+                    <input type="hidden" name="scenario" value="{{ scenario }}">
+                    <input type="hidden" name="resultat" value="{{ resultat }}">
+                    <textarea name="log" style="display:none;">{{ log }}</textarea>
+
+                    {% for option in options %}
+                        <div>
+                            <input type="radio" id="regle_{{ loop.index0 }}" name="user_choice" 
+                            value="{{ indices[loop.index0] }}" {% if loop.first %}checked{% endif %} required>
+                            <label for="regle_{{ loop.index0 }}">{{ option }}</label>
+                        </div>
+                    {% endfor %}
+
+                    <div>
+                        <input type="radio" id="regle_none" name="user_choice" value="-1" required>
+                        <label for="regle_none">Ne pas sélectionner de règle</label>
+                    </div>
+
+                    <input type="submit" value="Valider le choix">
+                </form>
+            </div>
+        {% endif %}
+
+        {% if analyse %}
+            {% if rule_str %}
+                <div id="rule_str">
+                    <h2>Règle finale appliquée :</h2>
+                    <pre>La règle qui a été choisie parmi les règles applicables dans la situation courante est : {{ rule_str }}</pre>
+                </div>
+            {% endif %}
+            <div id="analyse">
+                <h2>Ecriture logique de la règle:</h2>
+                <pre>{{ analyse }}</pre>
+            </div>
+        {% endif %}
+
+        {% if extension %}
+            <form method="post" action="/exceptions">
+                <input type="hidden" name="scenario" value="{{ scenario }}">
+                <input type="hidden" name="resultat" value="{{ resultat }}">
+                <textarea name="log" style="display:none;">{{ log }}</textarea>
+                <h2>Nous allons maintenant proposer de créer des exceptions à partir des règles sélectionnées</h2>
+                <h3>Choix de la distance utilisée pour le choix de l'exception:</h3>
+                {% for option in distances %}
+                    <div>
+                        <input type="radio" id="dist_{{ loop.index0 }}" name="distances" 
+                        value="{{ option }}" {% if loop.first %}checked{% endif %} required>
+                        <label for="dist_{{ loop.index0 }}">{{ option }}</label>
+                    </div>
+                {% endfor %}
+
+                <h3>Choix de la méthode de sélection:</h3>
+                {% for option in selection %}
+                    <div>
+                        <input type="radio" id="sel_{{ loop.index0 }}" name="selection" 
+                        value="{{ option }}" {% if loop.first %}checked{% endif %} required>
+                        <label for="sel_{{ loop.index0 }}">{{ option }}</label>
+                    </div>
+                {% endfor %}
+
+                <script>
+                    document.addEventListener("DOMContentLoaded", function () {
+                        const radioButtons = document.querySelectorAll('input[name="selection"]');
+                        const seuilContainer = document.getElementById("seuil-container");
+                        const seuilInput = document.getElementById("seuil");
+
+                        function SeuilVisibility() {
+                            const selected = document.querySelector('input[name="selection"]:checked');
+                            if (selected && (selected.value === "Seuil" || selected.value === "Seuil Minimal")) {
+                                seuilContainer.style.display = "block";
+                                seuilInput.disabled = false;
+                            } else {
+                                seuilContainer.style.display = "none";
+                                seuilInput.disabled = true;
+                            }
+                        }
+
+                        radioButtons.forEach(function (btn) {
+                            btn.addEventListener("change", SeuilVisibility);
+                        });
+
+                        SeuilVisibility();
+                    });
+                </script>
+
+
+                <div id="seuil-container" style="display: none;">
+                    <label for="seuil">Choix du seuil associé: </label>
+                    <input type="number" id="seuil" name="seuil" min="0" step="1"
+                        value="{{ seuil if seuil is defined else 10 }}">
+                </div>
+
+                <input type="submit" value="Envoyer">
+            </form>
+        {% endif %}
+
+        {% if no_exception %}
+            <h3>Aucune règle suffisament proche n'a été détectée, pas de création d'exception proposée</h3>
+        {% elif indices_rules is defined %}
+            <h3>Voici les règles à partir desquelles nous proposons de créer une exception:</h3>
+
+            <form method="post" action="/proposition">
+                <input type="hidden" name="scenario" value="{{ scenario }}">
+                <input type="hidden" name="resultat" value="{{ resultat }}">
+                <textarea name="log" style="display:none;">{{ log }}</textarea>
+
+                {% for rule in options_rules %}
+                    <div style="margin-bottom: 1em; padding: 1em; border: 1px solid #ccc; border-radius: 8px;">
+                        <input type="radio" id="regle_{{ loop.index0 }}" name="choix_regle_exception"
+                            value="{{ options_rules[loop.index0] }}" {% if loop.first %}checked{% endif %} required>
+                        <label for="regle_{{ loop.index0 }}"><strong>{{ rule }}</strong></label>
+
+                        {% set exceptions = options_exceptions[loop.index0] %}
+                        {% if exceptions %}
+                            <ul style="margin-top: 0.5em; padding-left: 1.2em;">
+                                {% for ex in exceptions %}
+                                    <li>{{ ex }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p style="margin: 0.5em 0 0 1.2em; color: #666;"><em>Aucune exception connue</em></p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+
+                <div style="margin-top: 1em;">
+                    <input type="radio" id="regle_none" name="choix_regle_exception" value="-1" required>
+                    <label for="regle_none"><strong>Ne pas sélectionner de règle</strong></label>
+                </div>
+
+                <input type="submit" value="Valider le choix" style="margin-top: 1em;">
+            </form>
+        {% endif %}
+
+        {% if regle_exception %}
+            <h2>Règle choisie: </h2>
+            <pre>{{ regle_exception }}</pre>
+        {% endif %}
+
+        </main>
+    </body>
+</html>
