@@ -1,0 +1,6 @@
+cycliste traverse_parc écouteurs
+cycliste traverse_parc écouteurs ~passants
+véhicule traverse_feu_rouge
+véhicule etat_urgence traverse_feu_rouge
+véhicule traverse_parc
+véhicule etat_urgence autorisé

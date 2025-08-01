@@ -1,0 +1,6 @@
+interdit <=> ~ autorisé
+~ ( moins_30 & entre30_50 ) & ~ ( moins_30 & plus_50 ) & ~ ( entre30_50 & plus_50 )
+gyrophare_allumé >> etat_urgence
+etat_urgence >> alarme
+gyrophare_allumé << alarme
+interdit <=> prohibé

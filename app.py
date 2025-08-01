@@ -56,6 +56,20 @@ def call_llm(prompt):
     # Si aucune API ne marche :
     raise RuntimeError("Aucune API disponible actuellement.")
 
+def init_RB():
+    Rb = Rule_Base()
+    with open("W.txt") as inp:
+        W = list(inp.read().splitlines())
+    with open("P.txt", "r", encoding="utf-8") as f:
+        lignes = f.readlines()
+    P = [ligne.strip().split() for ligne in lignes if ligne.strip()]
+    with open("C.txt","r",encoding="utf-8") as f:
+        lignes = f.readlines()
+    C = [ligne.strip().split() for ligne in lignes if ligne.strip()]
+    Rb.add_W(W)
+    Rb.add_rules(P,C)
+    return Rb
+
 #----------------------------------------------------------------------------------------------#
 
 DISTANCE_METHODS = {"Distance de Hamming": "dist_hamming"}
@@ -66,6 +80,11 @@ SELECTION_METHODS = {"Seuil": "select_fct_treshold",
 
 API_clients = {"HuggingFace":client2,
                "Mistral":client1}
+
+W_files = {"W test":"W.txt"}
+
+RB_files = {"RB test":["P.txt","C.txt"]}
+
 
 @app.route("/")
 def index():
@@ -112,7 +131,7 @@ def traiter():
         return render_template("Application.html", resultat="Aucun scénario fourni.")
         
     choice = request.form.get("user_choice", None)              # On récupère le choix de l'utilisateur si il y en a un (choix de quelle règle appliquer)
-    Rb = init_rule_base2()              # Initialisation de la base de règles
+    Rb = init_RB()              # Initialisation de la base de règles
 
     if not session.get("decomposition") or (complement != None):                # Si on a la decomposition de S en mémoire ou que la décomposition n'est pas satisfaisante
         premises = ';'.join(Rb.Var_dictionnary._variables.keys())
@@ -234,7 +253,7 @@ def exception():
 
     resultat = request.form.get("resultat", "")
     S = resultat.split(";")
-    Rb = init_rule_base2()
+    Rb = init_RB()
     Rb.init_S(S)
 
     choix_ex = choix_exception(distance_method, Rb, arguments,deja_appliquees[-1])
@@ -280,7 +299,7 @@ def proposition():
 
     resultat = request.form.get("resultat", "")
     S = resultat.split(";")
-    Rb = init_rule_base2()
+    Rb = init_RB()
     Rb.init_S(S)
 
     return render_template(
