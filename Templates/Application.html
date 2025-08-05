@@ -20,16 +20,52 @@
             }
         </style>
 
-        <div class="api-select-container">
-            <form method="post" action="/set_api">
+        <div style="position: absolute; top: 1em; right: 2em;">
+            <form method="post" action="/set_config" style="display: flex; gap: 1em; align-items: center;">
+                <label for="w_choice">W :</label>
+                <select name="w_choice" id="w_choice">
+                    {% for w_name in W_files %}
+                        <option value="{{ w_name }}" {% if w_name == selected_w %}selected{% endif %}>
+                            {{ w_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label for="rb_choice">RB :</label>
+                <select name="rb_choice" id="rb_choice">
+                    {% for rb_name in RB_files %}
+                        <option value="{{ rb_name }}" {% if rb_name == selected_rb %}selected{% endif %}>
+                            {{ rb_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+
                 <label for="api">API :</label>
-                    <select name="api" id="api" onchange="this.form.submit()">
-                        {% for api_name in API %}
-                            <option value="{{ api_name }}" {% if api_name == selected_api %}selected{% endif %}>
-                                {{ api_name }}
-                            </option>
-                        {% endfor %}
-                    </select>
+                <select name="api" id="api">
+                    {% for api_name in API %}
+                        <option value="{{ api_name }}" {% if api_name == selected_api %}selected{% endif %}>
+                            {{ api_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <input type="submit" value="Changer">
+            </form>
+        </div>
+
+        <div style="margin-top: 2em;">
+            <h4>Importer vos propres fichiers de règles :</h4>
+            <form method="post" action="/upload_rules" enctype="multipart/form-data">
+                <label for="file_w">Fichier W :</label>
+                <input type="file" name="file_w" accept=".txt" required>
+
+                <label for="file_p">Fichier P :</label>
+                <input type="file" name="file_p" accept=".txt" required>
+
+                <label for="file_c">Fichier C :</label>
+                <input type="file" name="file_c" accept=".txt" required>
+
+                <input type="submit" value="Uploader et utiliser">
             </form>
         </div>
 
@@ -201,17 +237,22 @@
                 <input type="hidden" name="resultat" value="{{ resultat }}">
                 <textarea name="log" style="display:none;">{{ log }}</textarea>
 
-                {% for rule in options_rules %}
+                {% for i in range(options_rules | length) %}
                     <div style="margin-bottom: 1em; padding: 1em; border: 1px solid #ccc; border-radius: 8px;">
-                        <input type="radio" id="regle_{{ loop.index0 }}" name="choix_regle_exception"
-                            value="{{ options_rules[loop.index0] }}" {% if loop.first %}checked{% endif %} required>
-                        <label for="regle_{{ loop.index0 }}"><strong>{{ rule }}</strong></label>
+                        <input type="radio" id="regle_{{ i }}" name="choix_regle_exception"
+                            value="{{ options_rules[i] }}" {% if i == 0 %}checked{% endif %} required>
+                        <label for="regle_{{ i }}"><strong>{{ options_rules[i] }}</strong></label>
 
-                        {% set exceptions = options_exceptions[loop.index0] %}
+                        {% set exceptions = options_exceptions[i] %}
+                        {% set adaptations = exceptions_string[i] %}
+
                         {% if exceptions %}
                             <ul style="margin-top: 0.5em; padding-left: 1.2em;">
-                                {% for ex in exceptions %}
-                                    <li>{{ ex }}</li>
+                                {% for j in range(exceptions | length) %}
+                                    <li>
+                                        <strong>{{ exceptions[j] }}</strong><br>
+                                        <em>Adaptation proposée :</em> {{ adaptations[j] }}
+                                    </li>
                                 {% endfor %}
                             </ul>
                         {% else %}

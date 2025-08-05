@@ -3,4 +3,8 @@ cycliste traverse_parc écouteurs ~passants
 véhicule traverse_feu_rouge
 véhicule etat_urgence traverse_feu_rouge
 véhicule traverse_parc
-véhicule etat_urgence autorisé
+véhicule autorisé
+véhicule interdit
+véhicule traverse_feu_rouge moins_30
+véhicule traverse_feu_rouge entre30_50
+véhicule traverse_feu_rouge plus_50

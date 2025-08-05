@@ -4,3 +4,4 @@ gyrophare_allumé >> etat_urgence
 etat_urgence >> alarme
 gyrophare_allumé << alarme
 interdit <=> prohibé
+~ ( amende_0 & amende_68 ) & ~ ( amende_135 & amende_68 ) & ~ ( amende_135 & amende_0 )

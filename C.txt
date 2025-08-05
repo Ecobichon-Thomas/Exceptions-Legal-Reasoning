@@ -3,4 +3,8 @@ autorisé
 interdit
 autorisé
 interdit
-~amende
+amende_0
+amende_68
+amende_0
+amende_68
+amende_135

@@ -337,9 +337,10 @@ class Rule_Base:
             str1 = ' ^ '.join(str(s) for s in list_P[i])                # On enregistre un string de la règle pour l'affichage (avant l'ajout des synonymes etc.. pour plus de lisibilité)
             str2 = ' ^ '.join(str(s) for s in list_C[i])
             self.rules_original.append(f"{str1} => {str2}")
-
+            
             P = synonymes_elimination (list_to_vars(self.Var_dictionnary,list_P[i]),self.dict_local)              # On élimine les syonymes/antonymes
             C = synonymes_elimination (list_to_vars(self.Var_dictionnary,list_C[i]),self.dict_local)
+
             P = ensemble_premices_equi2(P,self.W)               # on gère les implications
             C = ensemble_premices_equi2(C,self.W)
 
@@ -404,8 +405,6 @@ class Rule_Base:
         return compatibility_matrix
     
     def dist_hamming(self, indice):                # TEST OK
-        print("\n")
-        print("Hamming")
         P1 = np.atleast_2d(self.P[indice])[0]             # indice est l'indice de la règle qu'on va comparer aux autres
         C1 = self.C[indice]
         #C1_full = ensemble_premices_equi (C1, self.W)
@@ -463,6 +462,7 @@ def Select_Rule_web (rulebase,regles_possibles):
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 def select_fct_treshold (Dist_vector,threshold):
+    print("Dist_vector",Dist_vector)
     i = Dist_vector.index(0)                # On enlève la règle qu'on compare
     Dist_vector[i] = int(threshold)+1
 
@@ -511,10 +511,8 @@ def scenario_check_web4_test(S, rulebase,deja_appliquees):
         output.append("Plusieurs règles correspondent à la situation:")
         for i in regles_possibles:
             output.append(f"- Règle {i} : {rulebase.rules_original[i]}")
-            print("règle:",rulebase.rules_original[i])
 
         C_matrix = rulebase.compatibility_matrix(regles_possibles)
-        print("C_matrix:",C_matrix)
         rows_to_remove = set(np.where(C_matrix == 1)[0])
 
         for i in rows_to_remove:
@@ -546,22 +544,33 @@ def scenario_check_web4_test(S, rulebase,deja_appliquees):
 def choix_exception(distance_method, rulebase, selection_fct_and_args,regle_choisie):
     selection_fct = selection_fct_and_args[0]
     args = selection_fct_and_args[1:]
-    print("regle_choisie:",regle_choisie)
-    print("distances:",getattr(rulebase, distance_method)(regle_choisie))
+
     selected_indices = globals()[selection_fct](getattr(rulebase, distance_method)(regle_choisie), *args)               # on sélectionne les règles dont la distance à regle_choisie satisfait les critères de la fonction de sélection choisie
-    indices_similaires,exceptions_associees = exceptions(rulebase, selected_indices)                # On filtre et élimine les règles qui n'ont pas d'exceptions
+    indices_similaires,exceptions_associees,adaptations_associees = exceptions(rulebase, selected_indices,rulebase.rules[regle_choisie])                # On filtre et élimine les règles qui n'ont pas d'exceptions
     return {"indices":indices_similaires,
             "options":[rulebase.rules_original[i] for i in indices_similaires],
-            "exceptions associées":[[rulebase.rules_original[i] for i in liste] for liste in exceptions_associees]}
+            "exceptions associées":[[rulebase.rules_original[i] for i in liste] for liste in exceptions_associees],
+            "regles_adaptees":adaptations_associees}
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
-def exceptions(Rb, selected_indices):
+def difference_premises (longue,courte):                # Difference entre 2 listes de prémices, avec longue une liste qui contient courte
+    diff =[]
+    for p in longue:
+        if len(is_element_in_list(p, courte))==0:
+            diff.append(p)
+    return diff
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+def exceptions(Rb, selected_indices,regle_choisie):
     filtre = []
     excep = []
+    adaptations_associees = []
     for i in selected_indices:
         r1 = Rb.rules[i]
         liste_exceptions = []                # liste des exceptions de la règle i
+        liste_adaptations = []                # liste des adaptations de la règle i
         for j,r2 in enumerate(Rb.rules):                # On compare avec toutes les autres règles pour détecter les exceptions associées
             if j == i:
                 continue
@@ -569,9 +578,11 @@ def exceptions(Rb, selected_indices):
                 if not Rb.compatible([r1,r2],conclusions_only=True):              # Si elles sont incompatibales on sélectionne la règle
                         filtre.append(i)
                         liste_exceptions.append(j)
+                        liste_adaptations.append([regle_choisie.premises+difference_premises(r2.premises,r1.premises),r2.conclusion])
         if len(liste_exceptions)>0:
             excep.append(liste_exceptions)
-    return filtre,excep
+            adaptations_associees.append(liste_adaptations)
+    return filtre,excep,adaptations_associees             # On renvoie les règles et leurs exceptions associées
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
