@@ -143,13 +143,13 @@ class Rule:
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 '''TEST OK''' 
-def is_a_in_b(short, long):
-    return all(any(x.is_equivalent(y) for y in long) for x in short)
+def is_a_in_b(short, long,W):
+    return all(any(x.is_equivalent(y) for y in ensemble_premices_equi2(long,W)) for x in ensemble_premices_equi2(short,W))
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
-def is_element_in_list(element, liste):
-    return np.where([x.is_equivalent(element) for x in liste])[0]
+def is_element_in_list(element, liste,W):
+    return np.where([x.is_equivalent(element) for x in ensemble_premices_equi2(liste,W)])[0]
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
@@ -165,32 +165,9 @@ def children_extraction(formula):
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
-'''TEST OK'''
-def dictionnaire_eval_rules (Rb,rules,conclusions_only = False):                # Quand on veut sélectionner les règles applicables on s'intéresse aux prémices et aux conclusions
-    # quand on veut vérifier qu'une règle est l'exception d'une autre on s'intéresse uniquement à la compatibilité des CONCLUSIONS
-    Truth_Dict = {p : False for p in Rb.Var_dictionnary._variables}              # On crée un dictionnaire avec toutes les propositions utilisées dans Rb (ne contient pas de négation par construction)
-    if conclusions_only == True:                # Cas pour la gestion des exceptions
-        Propositions = []
-    else:
-        Propositions = Rb.S
-    Propositions_names = []
-    for r in rules:# Liste des propositions utilisées dans S plus les conclusions des 2 règles sélectionnées
-        Propositions =  Propositions + r.conclusion
-    all_p = ensemble_premices_equi2(Propositions, Rb.W)                # Toutes les propositions engendrées par les propositions de départ
-    for s in all_p:
-        for s_bis in all_p:
-            if s_bis.is_equivalent(Not(s)):             # On teste si la négation de chacunes des propositions est dans le vecteur, si c'est le cas on sort immédiatement de la fonction
-                return -1,[]
-        if not isinstance(s,Not):
-            Propositions_names.append(s.name)
-            Truth_Dict[s.name] = True               # Si jamais la proposition n'est pas une négation, on fixe sa valeur à True (cf. HYPOTHESE)
-        else:
-            Propositions_names.append(s.children[0].name)
-    return Truth_Dict,Propositions_names
-
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
-
-def update_dict_local (dict_local,f):                   # Attention verifier que c'est une équivalence avant
+def update_dict_local (Rb,f):                   # Attention verifier que c'est une équivalence avant
+    W = Rb.W
+    dict_local = Rb.dict_local
     temp = dict_local
     left,right = f.children
     if len(dict_local) == 0:
@@ -201,26 +178,26 @@ def update_dict_local (dict_local,f):                   # Attention verifier que
     synonyme = True
     for i,D in enumerate(dict_local):
         if l==-1:
-            if is_a_in_b([left], D):                # si la partie gauche est dans le vecteur
-                if is_a_in_b([right],D):                    # et la partie droite
+            if is_a_in_b([left], D,W):                # si la partie gauche est dans le vecteur
+                if is_a_in_b([right],D,W):                    # et la partie droite
                     return temp             # pas de modifications
                 else:
                     synonyme = not synonyme
                     l = i
-            elif is_a_in_b([Not(left)], D):               # De même avec la négation
-                if is_a_in_b([Not(right)],D):
+            elif is_a_in_b([Not(left)], D,W):               # De même avec la négation
+                if is_a_in_b([Not(right)],D,W):
                     return temp
                 else:
                     l = i
         if r==-1:
-            if is_a_in_b([right], D):
-                if is_a_in_b([left],D):
+            if is_a_in_b([right], D,W):
+                if is_a_in_b([left],D,W):
                     return temp
                 else:
                     synonyme = not synonyme
                     r = i
-            elif is_a_in_b([Not(right)], D):               # De même avec la négation
-                if is_a_in_b([Not(left)],D):
+            elif is_a_in_b([Not(right)], D,W):               # De même avec la négation
+                if is_a_in_b([Not(left)],D,W):
                     return temp
                 else:
                     r = i
@@ -252,13 +229,13 @@ def update_dict_local (dict_local,f):                   # Attention verifier que
     
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
-def synonymes_elimination (premises,dict_local):                # On traduit les synonymes
+def synonymes_elimination (premises,dict_local,W):                # On traduit les synonymes
     temp = list(premises.copy())
     for D in dict_local:
         syn = False
         ant = False
         for d in D:
-            indices_syn = is_element_in_list(d, temp)
+            indices_syn = is_element_in_list(d, temp,W)
             if len(indices_syn)>0 and syn:
                 for i in indices_syn:
                     del temp[i]
@@ -267,7 +244,7 @@ def synonymes_elimination (premises,dict_local):                # On traduit les
                 temp[indices_syn[0]] = D[0]
                 for i in indices_syn[1:]:
                     del temp[i]
-            indices_ant = is_element_in_list(Not(d), temp)
+            indices_ant = is_element_in_list(Not(d), temp,W)
             if len(indices_ant)>0 and ant:
                 for i in indices_ant:
                     del temp[i]
@@ -311,11 +288,12 @@ class Rule_Base:
             f = str_to_formula(i,self)
             self.W.append(f)
             if isinstance(f,Iff):
-                self.dict_local = update_dict_local (self.dict_local,f)
+                self.dict_local = update_dict_local (self,f)
 
     def init_S(self,list_S):                # TEST OK
         self.S_original = ' ^ '.join(str(s) for s in list_S)
-        self.S = ensemble_premices_equi (list_to_vars(self.Var_dictionnary,list_S),self.W)
+        S_no_syn = synonymes_elimination(list_to_vars(self.Var_dictionnary,list_S),self.dict_local,self.W)
+        self.S = ensemble_premices_equi2 (S_no_syn,self.W)
         count = 0
         for s in self.S:
             if (not isinstance(s,Not)) and (s not in self.premises):
@@ -338,20 +316,20 @@ class Rule_Base:
             str2 = ' ^ '.join(str(s) for s in list_C[i])
             self.rules_original.append(f"{str1} => {str2}")
             
-            P = synonymes_elimination (list_to_vars(self.Var_dictionnary,list_P[i]),self.dict_local)              # On élimine les syonymes/antonymes
-            C = synonymes_elimination (list_to_vars(self.Var_dictionnary,list_C[i]),self.dict_local)
+            P = synonymes_elimination (list_to_vars(self.Var_dictionnary,list_P[i]),self.dict_local,self.W)              # On élimine les syonymes/antonymes
+            C = synonymes_elimination (list_to_vars(self.Var_dictionnary,list_C[i]),self.dict_local,self.W)
 
-            P = ensemble_premices_equi2(P,self.W)               # on gère les implications
-            C = ensemble_premices_equi2(C,self.W)
+            P_bis = ensemble_premices_equi2(P,self.W)               # on gère les implications
+            C_bis = ensemble_premices_equi2(C,self.W)
 
-            for c in C:
+            for c in C_bis:
                 if (not isinstance(c,Not)) and (c not in self.conclusions):               # Mise à jour de self.conclusions
                     self.conclusions.append(c)
                 elif (isinstance(c,Not)) and (c.children[0] not in self.conclusions):
                     self.conclusions.append(c.children[0])
                 
             count = 0               # compteur du nombre de premises ajoutées
-            for p in P:             # Mise à jour de self.premises
+            for p in P_bis:             # Mise à jour de self.premises
                 if (not isinstance(p,Not)) and (p not in self.premises):
                     self.premises.append(p)
                     count += 1
@@ -359,7 +337,7 @@ class Rule_Base:
                     self.premises.append(p.children[0])
                     count +=1
 
-            bin_vector = [1 if prem in P else -1 if Not(prem) in P else 0 for prem in self.premises]              # Création du vecteur de la nouvelle règle (1 pour la présence d'un premise, -1 pour la négation d'un premise, 0 sinon)
+            bin_vector = [1 if prem in P_bis else -1 if Not(prem) in P_bis else 0 for prem in self.premises]              # Création du vecteur de la nouvelle règle (1 pour la présence d'un premise, -1 pour la négation d'un premise, 0 sinon)
 
             for vecteur in self.P:              # Mise à jour de la matrice P
                 vecteur.extend([0] * count)
@@ -378,9 +356,9 @@ class Rule_Base:
     
     def inclusion(self, indices):                # TEST OK
         if len(indices) == 0:           # Convention: si le vecteur est vide c'est qu'on veut comparer avec toute les règles
-            return [i for i in range(self.compteur) if is_a_in_b(self.rules[i].premises, self.S)]
+            return [i for i in range(self.compteur) if is_a_in_b(self.rules[i].premises, self.S,self.W)]
         else:
-            return [i for i in indices if is_a_in_b(self.rules[i].premises, self.S)]
+            return [i for i in indices if is_a_in_b(self.rules[i].premises, self.S,self.W)]
         
     def compatibility_matrix(self,indices):                # TEST OK
         n = len(indices)             # indices est un vecteur des indices de toutes les règles dont on veut comparer la compatibilité
@@ -396,10 +374,10 @@ class Rule_Base:
                 r1 = self.rules[i]
                 r2 = self.rules[j]
 
-                if is_a_in_b(r1.premises, r2.premises):              # On teste si il y a inclusion des premises d'une règle dans l'autre
+                if is_a_in_b(r1.premises, r2.premises,self.W):              # On teste si il y a inclusion des premises d'une règle dans l'autre
                     if not self.compatible([r1,r2],conclusions_only=True):              # Est ce que les conclusions sont compatibles?
                         compatibility_matrix[a, b] = 1
-                elif is_a_in_b(r2.premises, r1.premises):               # Si c'est inclus dans l'autre sens on remplit le bas de la matrice,
+                elif is_a_in_b(r2.premises, r1.premises,self.W):               # Si c'est inclus dans l'autre sens on remplit le bas de la matrice,
                     if not self.compatible([r1,r2],conclusions_only=True):              # Est ce que les conclusions sont compatibles?
                         compatibility_matrix[b, a] = 1
         return compatibility_matrix
@@ -407,14 +385,12 @@ class Rule_Base:
     def dist_hamming(self, indice):                # TEST OK
         P1 = np.atleast_2d(self.P[indice])[0]             # indice est l'indice de la règle qu'on va comparer aux autres
         C1 = self.C[indice]
-        #C1_full = ensemble_premices_equi (C1, self.W)
-        #c1_str = ' & '.join(str(p) for p in C1)
 
         C = self.C
         P = np.array(self.P)
         same_concl = []
         for c in C:
-            if len(c)==len(C1) and is_a_in_b(c, C1):                # Si l'un est inclus dans l'autre et qu'ils ont la même longueur
+            if is_a_in_b(C1, c,self.W) and is_a_in_b(c, C1,self.W):                # Si l'un est inclus dans l'autre et qu'ils ont la même longueur
                 same_concl.append(True)
             else:
                 same_concl.append(False)
@@ -435,8 +411,8 @@ class Rule_Base:
     #    except ValueError:
     #        return -1
         
-    def compatible(self,rules,conclusions_only=False):
-        Truth_dict,propositions = dictionnaire_eval_rules (self,rules,conclusions_only)
+    def compatible(self,rules,conclusions_only=False,premices_list=None):
+        Truth_dict = dictionnaire_eval_rules (self,rules,conclusions_only,premices_list)
         if Truth_dict == -1:
             return False
         W_temp = (self.W).copy()
@@ -444,7 +420,30 @@ class Rule_Base:
             if isinstance(w,Iff):
                 W_temp.remove(w)                # On a géré au préalable les équivalences, plus besoin de le faire ici
         return all(w.evaluate(**Truth_dict) for w in W_temp)
-    
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+'''TEST OK'''
+def dictionnaire_eval_rules (Rb,rules,conclusions_only = False,premices_list=None):                # Quand on veut sélectionner les règles applicables on s'intéresse aux prémices et aux conclusions
+    # quand on veut vérifier qu'une règle est l'exception d'une autre on s'intéresse uniquement à la compatibilité des CONCLUSIONS
+    Truth_Dict = {p : False for p in Rb.Var_dictionnary._variables}              # On crée un dictionnaire avec toutes les propositions utilisées dans Rb (ne contient pas de négation par construction)
+    if conclusions_only == True:                # Cas pour la gestion des exceptions
+        Propositions = []
+    else:
+        Propositions = Rb.S
+    if premices_list != None:              # Cas où on a juste une liste de prémices (c'est pas propre à changer plus tard) --> quand on a pas encore ajouté les règles à la base
+        Propositions = Propositions + premices_list
+    for r in rules:# Liste des propositions utilisées dans S plus les conclusions des 2 règles sélectionnées
+        Propositions =  Propositions + r.conclusion
+    all_p = ensemble_premices_equi2(Propositions, Rb.W)                # Toutes les propositions engendrées par les propositions de départ
+    for s in all_p:
+        for s_bis in all_p:
+            if s_bis.is_equivalent(Not(s)):             # On teste si la négation de chacunes des propositions est dans le vecteur, si c'est le cas on sort immédiatement de la fonction
+                return -1
+        if not isinstance(s,Not):
+            Truth_Dict[s.name] = True               # Si jamais la proposition n'est pas une négation, on fixe sa valeur à True (cf. HYPOTHESE)
+    return Truth_Dict
+
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 
@@ -502,7 +501,7 @@ def scenario_check_web4_test(S, rulebase,deja_appliquees):
     temp = regles_possibles.copy()
     for i in regles_possibles:             #Eliminer règles donc la conclusion est incompatible avec la situation (et celles déjà appliquées)
         r  = rulebase.rules[i]
-        if (r.conclusion[0] in rulebase.S) or (not rulebase.compatible([r])) or (i in deja_appliquees):               #eliminer aussi les règles dont les conclusions sont déjà dans S
+        if is_a_in_b(r.conclusion, rulebase.S,rulebase.W) or (not rulebase.compatible([r])) or (i in deja_appliquees):               #eliminer aussi les règles dont les conclusions sont déjà dans S
             temp.remove(i)
     regles_possibles = temp
 
@@ -513,7 +512,7 @@ def scenario_check_web4_test(S, rulebase,deja_appliquees):
             output.append(f"- Règle {i} : {rulebase.rules_original[i]}")
 
         C_matrix = rulebase.compatibility_matrix(regles_possibles)
-        rows_to_remove = set(np.where(C_matrix == 1)[0])
+        rows_to_remove = set(np.where(C_matrix == 1)[0])                # suppression des règles moins prioritaires
 
         for i in rows_to_remove:
             for j in range(len(regles_possibles)):
@@ -521,7 +520,7 @@ def scenario_check_web4_test(S, rulebase,deja_appliquees):
                     r1_index = regles_possibles[i]
                     r2_index = regles_possibles[j]
                     output.append(f"La règle {r2_index} est prioritaire sur la règle {r1_index}, on écarte la règle {r1_index}")
-
+    
         regles_possibles = [r for i, r in enumerate(regles_possibles) if i not in rows_to_remove]
     elif len(regles_possibles) == 1:
         output.append("\n")
@@ -554,10 +553,10 @@ def choix_exception(distance_method, rulebase, selection_fct_and_args,regle_choi
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
-def difference_premises (longue,courte):                # Difference entre 2 listes de prémices, avec longue une liste qui contient courte
+def difference_premises (longue,courte,W):                # Difference entre 2 listes de prémices, avec longue une liste qui contient courte
     diff =[]
     for p in longue:
-        if len(is_element_in_list(p, courte))==0:
+        if len(is_element_in_list(p, courte,W))==0:
             diff.append(p)
     return diff
 
@@ -574,11 +573,17 @@ def exceptions(Rb, selected_indices,regle_choisie):
         for j,r2 in enumerate(Rb.rules):                # On compare avec toutes les autres règles pour détecter les exceptions associées
             if j == i:
                 continue
-            if is_a_in_b(r1.premises, r2.premises):             # Si on a des prémices incluses dans r2 on étudie la compatibilité des ccl
-                if not Rb.compatible([r1,r2],conclusions_only=True):              # Si elles sont incompatibales on sélectionne la règle
-                        filtre.append(i)
+            if is_a_in_b(r1.premises, r2.premises,Rb.W):             # Si on a des prémices incluses dans r2 on étudie la compatibilité des ccl
+                if not Rb.compatible([r1,r2],conclusions_only=True):              # Si elles sont incompatibles on sélectionne la règle
+                    # On définit ici les caractéristques de l'exception associée, p et c
+                    p_adaptation = regle_choisie.premises+difference_premises(r2.premises,r1.premises,Rb.W)
+                    c_adaptation = r2.conclusion
+                    if is_a_in_b(p_adaptation, Rb.S,Rb.W) and Rb.compatible([],conclusions_only=False,premices_list=c_adaptation):           
+                        # Si jamais l'adpatation proposée n'est pas applicable dans la situation, on passe à la suite (prémices pas dans S ou conclusion incompatible avec S)
+                        if i not in filtre:
+                            filtre.append(i)
                         liste_exceptions.append(j)
-                        liste_adaptations.append([regle_choisie.premises+difference_premises(r2.premises,r1.premises),r2.conclusion])
+                        liste_adaptations.append([p_adaptation,c_adaptation])
         if len(liste_exceptions)>0:
             excep.append(liste_exceptions)
             adaptations_associees.append(liste_adaptations)
