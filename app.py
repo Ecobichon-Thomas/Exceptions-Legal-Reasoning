@@ -5,6 +5,8 @@ from lib_logic2 import *
 import os
 from huggingface_hub import InferenceClient
 from werkzeug.utils import secure_filename
+import shutil
+import copy
 
 app = Flask(__name__)
 app.secret_key = "test75591729"
@@ -57,10 +59,16 @@ def call_llm(prompt):
     raise RuntimeError("Aucune API disponible actuellement.")
 
 def init_RB():
+    Bool = session.get("upload_init", False)
     Rb = Rule_Base()
 
     w_path = session.get("selected_w_path", "W.txt")
-    rb_path = session.get("selected_rb_path", "RB.txt")
+    if not Bool:
+        shutil.copy("RB.txt", "uploads/RB_working.txt")
+        session["selected_rb_path"] = "uploads/RB_working.txt"
+        session["upload_init"]=True
+
+    rb_path = "uploads/RB_working.txt"
 
     P=[]
     C=[]
@@ -160,6 +168,7 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 @app.route("/upload_rules", methods=["POST"])
 def upload_rules():
+    session["upload_init"] = True
     w_choice = request.form.get("w_choice")
     rb_choice = request.form.get("rb_choice")
 
@@ -171,31 +180,43 @@ def upload_rules():
             return "Tous les fichiers sont requis", 400
 
         w_path = os.path.join(app.config["UPLOAD_FOLDER"], secure_filename(file_w.filename))
-        rb_path = os.path.join(app.config["UPLOAD_FOLDER"], secure_filename(file_rb.filename))
+        rb_original_path = os.path.join(app.config["UPLOAD_FOLDER"], secure_filename(file_rb.filename))
 
         file_w.save(w_path)
-        file_rb.save(rb_path)
+        file_rb.save(rb_original_path)
+
+        rb_working_path = os.path.join(app.config["UPLOAD_FOLDER"], "RB_working.txt")
+        shutil.copy(rb_original_path, rb_working_path)
 
         session["selected_w_path"] = w_path
-        session["selected_rb_path"] = rb_path
+        session["selected_rb_path"] = rb_working_path
 
     else:
         if w_choice not in W_files or rb_choice not in RB_files:
             return "Fichiers prédéfinis invalides", 400
+        
+        w_original_path = W_files[w_choice]
+        rb_original_path = RB_files[rb_choice]
 
-        session["selected_w_path"] = w_path
-        session["selected_rb_path"] = rb_path
+        rb_working_path = os.path.join(app.config["UPLOAD_FOLDER"], "RB_working.txt")
+        shutil.copy(rb_original_path, rb_working_path)
+
+        session["selected_w_path"] = w_original_path
+        session["selected_rb_path"] = rb_working_path
 
     return redirect(url_for("index"))
 
 #----------------------------------------------------------------------------------------------#
 
-@app.route("/traiter", methods=["POST"])
+@app.route("/traiter", methods=["GET","POST"])
 def traiter():
-    scenario = request.form.get('scenario', "").strip()             # Scenario dans le système, déjà décomposé
-    resultat = request.form.get("resultat", "")             # Décomposition de ce scénario
-    scenario1 = request.form.get("scenario1", "").strip()           # Nouveau scénario si l'utilisateur en a fourni un
-    complement = request.form.get("complement", None)         #Complément au prompt si l'utilisateur n'est pas satisfait par la décomposition
+    print("TRAITER")
+    scenario = (request.form.get('scenario') or request.args.get('scenario') or "").strip()             # Scenario dans le système, déjà décomposé
+    print("secnario",scenario)
+    resultat = request.form.get("resultat") or request.args.get("resultat") or ""             # Décomposition de ce scénario
+    print("resultat",resultat)
+    scenario1 = (request.form.get("scenario1") or request.args.get("scenario1") or "").strip()           # Nouveau scénario si l'utilisateur en a fourni un
+    complement = request.form.get("complement") or request.args.get("complement")         #Complément au prompt si l'utilisateur n'est pas satisfait par la décomposition
 
     if scenario1 != "":
         selected_api = session.get("selected_api", "HuggingFace")  # sauvegarde le choix actuel
@@ -218,20 +239,22 @@ def traiter():
         
     choice = request.form.get("user_choice", None)              # On récupère le choix de l'utilisateur si il y en a un (choix de quelle règle appliquer)
     Rb = init_RB()              # Initialisation de la base de règles
+    print("RB1",Rb)
+    print("session.get(decomposition)",session.get("decomposition"))
 
     if not session.get("decomposition") or (complement != None):                # Si on a la decomposition de S en mémoire ou que la décomposition n'est pas satisfaisante
         premises = ';'.join(Rb.Var_dictionnary._variables.keys())
-        prompt = ("Tu es un expert des textes juridiques et de la décomposition de situations juridiques en prémices"
-        +"Décompose le scénario sous la forme d'une liste de prémices, en utilisant le caractère ; comme séparateur dans ton retour."
+        prompt = ("Tu es un expert des textes juridiques et de la décomposition de situations juridiques en prémisses"
+        +"Décompose le scénario sous la forme d'une liste de prémisses, en utilisant le caractère ; comme séparateur dans ton retour."
         +"Voici un exemple de scénario, 'Une voiture a traversé un feu rouge', le résultat attendu serait, 'véhicule;traverse_feu_rouge': \n " 
         +"Scénario: \n"+ scenario 
-        +"\n Liste des prémices déjà en mémoire qui peuvent être réutilisés si le scénario comporte des éléments similaires:"
+        +"\n Liste des prémisses déjà en mémoire qui peuvent être réutilisés si le scénario comporte des éléments similaires:"
         +premises
-        +"\n Ne crée de nouveau prémice que si c'est nécessaire."
-        +"\n Ne rajoute des prémices que lorsque tu as de l'information explicite, ne fait pas d'inférence. "
-        +"\n Par exemple une ambulance n'est pas forcément en état d'urgence et n'a PAS FORCEMENT son gyrophare allumé! C'est le cas uniquement si c'est PRECISE, généralise cet exemple à tout les prémices"
-        +"\n Ton retour ne doit comporter que la liste des prémices correspondant au scénario dans le format demandé"
-        +"\n Si certains prémices sont des négations, utilise la caractère ~ au début de la chaîne. Par exemple:"
+        +"\n Ne crée de nouveau prémisse que si c'est nécessaire."
+        +"\n Ne rajoute des prémisses que lorsque tu as de l'information explicite, ne fait pas d'inférence. "
+        +"\n Par exemple une ambulance n'est pas forcément en état d'urgence et n'a PAS FORCEMENT son gyrophare allumé! C'est le cas uniquement si c'est PRECISE, généralise cet exemple à tout les prémisses"
+        +"\n Ton retour ne doit comporter que la liste des prémisses correspondant au scénario dans le format demandé"
+        +"\n Si certains prémisses sont des négations, utilise la caractère ~ au début de la chaîne. Par exemple:"
         +"\n 'Une ambulance avec son gyrophare n'a pas traversé le parc' donnerait:"
         +"\n véhicule;gyrophare;etat_urgence;~traverse_parc" 
         +"\n 'et, Une ambulance ne s'est pas arrêté au feu rouge' donnerait:"
@@ -242,7 +265,6 @@ def traiter():
         +"\n Attention!! ne renvoie que un string de la forme demandée, pas d'explications!!!")
 
         if (complement != None):
-            print("session.get(decomposition)",session.get("decomposition"))
             S_join = ';'.join(session.get("decomposition"))
             prompt += ("Voici la décomposition que tu as proposé à l'étape précédente:"+S_join
             +"Voici des précisions de l'utilisateur pour l'améliorer:"+complement+"recommence en les prenant en compte")
@@ -255,10 +277,12 @@ def traiter():
         session["appliquees"] = []
         log = "Génération d'une extension:"
     else :
-        resultat = request.form.get("resultat", "")
+        #resultat = request.form.get("resultat", "")
         S = session.get("decomposition", [])
-        log = request.form.get("log", "")
+        log = request.form.get("log") or request.args.get("log") or ""
 
+    print("S",S)
+    print("resultat")
     deja_appliquees = session.get("appliquees", [])
 
     if (choice is not None) and (choice != "-1"):                 # Si l'utilisateur a choisi
@@ -294,7 +318,7 @@ def traiter():
                                    No_rule = True)
         
         else:               # Sinon on passe à la génération des exceptions
-            log +="\n \n Il n'y a plus de règles applicables: Fin de la génération de l'extension"
+            #log +="\n \n Il n'y a plus de règles applicables: Fin de la génération de l'extension"
             return render_template("Application.html",
                                    extension = True,
                                    log=log)
@@ -333,22 +357,26 @@ def exception():
     choix_ex = choix_exception(distance_method, Rb, arguments,deja_appliquees[-1])
 
     if choix_ex["options"] == []:
-        return render_template(
-        "Application.html",
-        resultat=resultat,
-        scenario = scenario,
-        no_exception = True,
-        log=log)
+        log +=f"\n \n Aucune des règles de la base n'est suffisamment proche pour proposer une adaptation d'exception"
+        return redirect(url_for(
+                "traiter",
+                scenario=scenario,
+                log=log,
+                resultat=resultat
+            ))
     
-    exceptions_string = choix_ex["regles_adaptees"].copy()
+    exceptions_string = copy.deepcopy(choix_ex["regles_adaptees"])
+    exceptions_lists = copy.deepcopy(choix_ex["regles_adaptees"])
     for i,regle in enumerate(choix_ex["regles_adaptees"]):
         for j,exception in enumerate(regle) :
             P,C = exception
+            P_list = [str(v) for v in P]
+            C_list = [str(v) for v in C]
             P_str = ' ^ '.join(str(s) for s in P)
             C_str = ' ^ '.join(str(c) for c in C)
             exceptions_string[i][j] = (f"{P_str} => {C_str}")
-
-    session["adaptations"] = choix_ex["regles_adaptees"]
+            exceptions_lists[i][j] = [P_list,C_list]
+    session["adaptations"]=exceptions_lists
 
     return render_template(
         "Application.html",
@@ -362,39 +390,57 @@ def exception():
 
 @app.route("/proposition", methods=["POST"])
 def proposition():
-
     scenario = request.form.get('scenario', "").strip()
     log = request.form.get("log", "")
 
     choix = request.form.get("choix_exception")
+    deja_appliquees = session["appliquees"]
+
+    resultat = request.form.get("resultat", "")
+    S = resultat.split(";")
 
     if choix == "-1":
-        return render_template(
-            "Application.html",
-            pas_de_choix = True,
-            resultat=resultat,
-            scenario = scenario,
-            log=log)
+        log +=f"\n \n Aucune des exceptions proposée n'a été validée"
+        return redirect(url_for(
+                "traiter",
+                scenario=scenario,
+                log=log,
+                resultat=resultat
+            ))
     else:
         i_str, j_str = choix.split("|")
         i = int(i_str)
         j = int(j_str)
+        
+        P,C = session.get("adaptations", [])[i][j]
+        P_str = ' '.join(s.replace(" ", "") for s in P)
+        C_str = ' '.join(c.replace(" ", "") for c in C)
+        adaptation_string = (f"{P_str}    >   {C_str}")
+        with open(session["selected_rb_path"], "a", encoding="utf-8") as f:
+            f.write("\n"+ adaptation_string)
 
-        adaptation_choisie = session.get("adaptations", [])[i][j]
-        print("adaptation_choisie",adaptation_choisie)
+        Rb = init_RB()
+        print("Rb",Rb)
+        Rb.init_S(S)
+        print("S",S)
+        ancienne_conclu = Rb.rules[deja_appliquees[-1]].conclusion              # suppression de l'ancienne conclu
+        nouvelle_decomposition = difference_premisses (session.get("decomposition", []),ancienne_conclu,Rb.W)
+        session["decomposition"] = nouvelle_decomposition
+
+        # comme on ajoute la nouvelle règle à la fin, son indice correspond au compteur
+        log +=f"\n \n Création d'une exception {Rb.rules[Rb.compteur-1]} à la règle:{Rb.rules[deja_appliquees[-1]]}"
+        log +=f"\n \n Suite à la création réussie d'une exception à la règle:{Rb.rules[deja_appliquees[-1]]} on annule son application pour poursuivre la génération d'une extension"
+        session["appliquees"] = deja_appliquees[:-1]                # Suppression de la dernière règle appliquée
+        print("deja_appliquees",session["appliquees"])
 
     #regle_exception = request.form.get("choix_regle_exception", "")
 
-    resultat = request.form.get("resultat", "")
-    S = resultat.split(";")
-    Rb = init_RB()
-    Rb.init_S(S)
-
-    return render_template(
-        "Application.html",
-        resultat=resultat,
-        scenario = scenario,
-        log=log)
+    return redirect(url_for(
+            "traiter",
+            scenario=scenario,
+            log=log,
+            resultat=resultat
+        ))
 
 if __name__ == "__main__":
     app.run(debug=True)

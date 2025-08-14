@@ -3,68 +3,72 @@
     <head>
         <meta charset="utf-8">
         <title>Handling Unexpected Exceptions in Legal Reasoning</title>
-        <link href="Application.css" rel="stylesheet">
+        <link rel="stylesheet" href="{{ url_for('static', filename='Application.css') }}">
     </head>
     <body>
         <header>
             <h1 id="ancre">Handling Unexpected Exceptions in Legal Reasoning</h1>
+            <div class="header-forms">
+                <form method="post" action="/set_config">
+                    <label for="api">API :</label>
+                    <select name="api" id="api">
+                        {% for api_name in API %}
+                            <option value="{{ api_name }}" {% if api_name == selected_api %}selected{% endif %}>
+                                {{ api_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <input type="submit" value="Changer">
+                </form>
+
+                <form method="post" action="/upload_rules" enctype="multipart/form-data">
+                    <label for="w_choice">Knowledge Base :</label>
+                    <select name="w_choice" id="w_choice" onchange="toggleWUpload()">
+                        {% for w_name in W_files %}
+                            <option value="{{ w_name }}" {% if w_name == selected_w %}selected{% endif %}>
+                                {{ w_name }}
+                            </option>
+                        {% endfor %}
+                        <option value="__upload__">Upload your files</option>
+                    </select>
+
+                    <div id="w_upload_fields" style="display:none;">
+                        <input type="file" name="w_file">
+                    </div>
+
+                    <label for="rb_choice">Rule Base :</label>
+                    <select name="rb_choice" id="rb_choice" onchange="toggleRBUpload()">
+                        {% for rb_name in RB_files %}
+                            <option value="{{ rb_name }}" {% if rb_name == selected_rb %}selected{% endif %}>
+                                {{ rb_name }}
+                            </option>
+                        {% endfor %}
+                        <option value="__upload__">Upload your files</option>
+                    </select>
+
+                    <div id="rb_upload_fields" style="display:none;">
+                        <input type="file" name="rb_file">
+                    </div>
+
+                    <input type="submit" value="Changer">
+                </form>
+            </div>
         </header>
 
-        <main>
+        <script>
+            window.addEventListener("beforeunload", function() {
+                sessionStorage.setItem("scrollPosition", window.scrollY);
+            });
 
-        <style>
-            .api-select-container {
-                position: absolute;
-                top: 1em;
-                right: 2em;
-            }
-        </style>
-
-        <form method="post" action="/set_config">
-            <label for="api">API :</label>
-            <select name="api" id="api">
-                {% for api_name in API %}
-                    <option value="{{ api_name }}" {% if api_name == selected_api %}selected{% endif %}>
-                        {{ api_name }}
-                    </option>
-                {% endfor %}
-            </select>
-            <input type="submit" value="Valider">
-        </form>
-
-        <form method="post" action="/upload_rules" enctype="multipart/form-data">
-            <label for="w_choice">W :</label>
-            <select name="w_choice" id="w_choice" onchange="toggleWUpload()">
-                {% for w_name in W_files %}
-                    <option value="{{ w_name }}" {% if w_name == selected_w %}selected{% endif %}>
-                        {{ w_name }}
-                    </option>
-                {% endfor %}
-                <option value="__upload__">Upload your files</option>
-            </select>
-
-            <div id="w_upload_fields" style="display: none; margin-top: 0.5em;">
-                <label for="uploaded_w">Fichier W.txt :</label>
-                <input type="file" name="uploaded_w" accept=".txt" required>
-            </div>
-
-            <label for="rb_choice">RB :</label>
-            <select name="rb_choice" id="rb_choice" onchange="toggleRBUpload()">
-                {% for rb_name in RB_files %}
-                    <option value="{{ rb_name }}" {% if rb_name == selected_rb %}selected{% endif %}>
-                        {{ rb_name }}
-                    </option>
-                {% endfor %}
-                <option value="__upload__">Upload your files</option>
-            </select>
-
-            <div id="rb_upload_fields" style="display: none; margin-top: 0.5em;">
-                <label for="uploaded_rb">Fichier RB.txt :</label>
-                <input type="file" name="uploaded_rb" accept=".txt" required>
-            </div>
-
-            <br><input type="submit" value="Valider">
-        </form>
+            // Restaurer la position au rechargement
+            window.addEventListener("load", function() {
+                let scrollPosition = sessionStorage.getItem("scrollPosition");
+                if (scrollPosition) {
+                    window.scrollTo(0, scrollPosition);
+                    sessionStorage.removeItem("scrollPosition");
+                }
+            });
+        </script>
 
         <script>
         function toggleRBUpload() {
@@ -92,56 +96,7 @@
         }
         </script>
 
-        <!--
-        <div style="position: absolute; top: 1em; right: 2em;">
-            <form method="post" action="/set_config" style="display: flex; gap: 1em; align-items: center;">
-                <label for="w_choice">W :</label>
-                <select name="w_choice" id="w_choice">
-                    {% for w_name in W_files %}
-                        <option value="{{ w_name }}" {% if w_name == selected_w %}selected{% endif %}>
-                            {{ w_name }}
-                        </option>
-                    {% endfor %}
-                </select>
-
-                <label for="rb_choice">RB :</label>
-                <select name="rb_choice" id="rb_choice">
-                    {% for rb_name in RB_files %}
-                        <option value="{{ rb_name }}" {% if rb_name == selected_rb %}selected{% endif %}>
-                            {{ rb_name }}
-                        </option>
-                    {% endfor %}
-                </select>
-
-                <label for="api">API :</label>
-                <select name="api" id="api">
-                    {% for api_name in API %}
-                        <option value="{{ api_name }}" {% if api_name == selected_api %}selected{% endif %}>
-                            {{ api_name }}
-                        </option>
-                    {% endfor %}
-                </select>
-
-                <input type="submit" value="Changer">
-            </form>
-        </div>
-
-        <div style="margin-top: 2em;">
-            <h4>Importer vos propres fichiers de règles :</h4>
-            <form method="post" action="/upload_rules" enctype="multipart/form-data">
-                <label for="file_w">Fichier W :</label>
-                <input type="file" name="file_w" accept=".txt" required>
-
-                <label for="file_p">Fichier P :</label>
-                <input type="file" name="file_p" accept=".txt" required>
-
-                <label for="file_c">Fichier C :</label>
-                <input type="file" name="file_c" accept=".txt" required>
-
-                <input type="submit" value="Uploader et utiliser">
-            </form>
-        </div>
-        -->
+        <main>
 
         <h2>Veuillez soumettre un scénario ci-dessous:</h2>
 
@@ -161,8 +116,8 @@
 
         {% if resultat is defined %}
             <div id="resultat">
-                <h2>Décomposition en prémices du scénario :</h2>
-                <p>Le scénario a été découpé en prémices par le llm sélectionné. Voici la décomposition obtenue:</p>
+                <h2>Décomposition en prémisses du scénario :</h2>
+                <p>Le scénario a été découpé en prémisses par le llm sélectionné. Voici la décomposition obtenue:</p>
                 <p>{{ resultat }}</p>
             </div>
             <p>Si cette décomposition ne vous convient pas, vous pouvez donner des indications supplémentaires ici pour que le llm améliore sa réponse:</p>
@@ -220,7 +175,7 @@
 
                     <div>
                         <input type="radio" id="regle_none" name="user_choice" value="-1" required>
-                        <label for="regle_none">Ne pas sélectionner de règle</label>
+                        <label for="regle_none">Essayer de générer une exception à partir de la dernière règle appliquée</label>
                     </div>
 
                     <input type="submit" value="Valider le choix">
@@ -246,7 +201,7 @@
                 <input type="hidden" name="scenario" value="{{ scenario }}">
                 <input type="hidden" name="resultat" value="{{ resultat }}">
                 <textarea name="log" style="display:none;">{{ log }}</textarea>
-                <h2>Nous allons maintenant proposer de créer des exceptions à partir des règles sélectionnées</h2>
+                <h2>Création d'une exception à partir de la dernière règle sélectionnée</h2>
                 <h3>Choix de la distance utilisée pour le choix de l'exception:</h3>
                 {% for option in distances %}
                     <div>

@@ -1,0 +1,166 @@
+/* ===== Reset & Base ===== */
+/* Style général */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background-color: #f8f9fa;
+}
+
+/* HEADER */
+header {
+    background-color: #2c3e50;
+    color: white;
+    padding: 1em 2em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.5em;
+}
+
+/* CONTENEUR DES FORMULAIRES À DROITE */
+.header-forms {
+    display: flex;
+    gap: 1em;
+    align-items: center;
+}
+
+.header-forms form {
+    display: flex;
+    align-items: center;
+    gap: 0.3em;
+}
+
+.header-forms label {
+    font-size: 0.9em;
+    color: #2c3e50;
+}
+
+.header-forms select,
+.header-forms input[type="submit"] {
+    padding: 0.3em 0.5em;
+    border-radius: 4px;
+    border: none;
+    font-size: 0.9em;
+}
+
+/* Style des sélecteurs */
+select {
+    background-color: white;
+}
+
+input[type="submit"] {
+    background-color: #3498db;
+    color: white;
+    cursor: pointer;
+}
+
+input[type="submit"]:hover {
+    background-color: #2980b9;
+}
+
+/* ===== Main content ===== */
+main {
+    padding: 2em;
+    max-width: 1000px;
+    margin: auto;
+    background: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    border-radius: 8px;
+}
+
+/* ===== Forms ===== */
+form {
+    margin-bottom: 2em;
+    padding: 1.2em;
+    background: #fafafa;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+label {
+    font-weight: bold;
+    display: block;
+    margin-top: 0.6em;
+}
+
+input[type="text"],
+textarea,
+select,
+input[type="number"],
+input[type="file"] {
+    width: 100%;
+    padding: 0.6em;
+    margin-top: 0.4em;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 0.95em;
+    box-sizing: border-box;
+    background: white;
+}
+
+textarea {
+    min-height: 100px;
+}
+
+input[type="submit"] {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 0.6em 1.2em;
+    font-size: 1em;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 1em;
+    transition: background 0.2s;
+}
+
+input[type="submit"]:hover {
+    background: #2980b9;
+}
+
+/* ===== Radio buttons ===== */
+input[type="radio"] {
+    margin-right: 0.4em;
+}
+
+form div {
+    margin-bottom: 0.5em;
+}
+
+/* ===== Sections ===== */
+#scenario_initial,
+#resultat,
+#analyse,
+#choix_regle,
+#rule_str {
+    margin-top: 2em;
+    padding: 1.2em;
+    border-left: 4px solid #3498db;
+    background: #f9fafe;
+    border-radius: 4px;
+}
+
+#log {
+    background: #f0f0f0;
+    padding: 1em;
+    border-radius: 6px;
+}
+
+/* ===== Special text ===== */
+em {
+    color: #777;
+}
+
+/* ===== Small devices ===== */
+@media (max-width: 700px) {
+    main {
+        padding: 1em;
+    }
+    input[type="text"], textarea, select {
+        font-size: 1em;
+    }
+}
