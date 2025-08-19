@@ -1,55 +1,34 @@
-/* ===== Reset & Base ===== */
-/* Style général */
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    background-color: #f8f9fa;
-}
-
-/* HEADER */
-header {
-    background-color: #2c3e50;
-    color: white;
-    padding: 1em 2em;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-header h1 {
-    margin: 0;
-    font-size: 1.5em;
-}
-
-/* CONTENEUR DES FORMULAIRES À DROITE */
-.header-forms {
-    display: flex;
-    gap: 1em;
-    align-items: center;
-}
-
-.header-forms form {
+.header-upload-form {
     display: flex;
     align-items: center;
-    gap: 0.3em;
+    gap: 20px;
+    flex-wrap: wrap; /* permet de passer à la ligne si l'écran est petit */
 }
 
-.header-forms label {
-    font-size: 0.9em;
-    color: #2c3e50;
+.form-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.header-forms select,
-.header-forms input[type="submit"] {
-    padding: 0.3em 0.5em;
-    border-radius: 4px;
-    border: none;
-    font-size: 0.9em;
-}
-
-/* Style des sélecteurs */
 select {
-    background-color: white;
+    padding: 4px;
+}
+
+.upload-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+input[type="file"] {
+    max-width: 180px;
+}
+
+.file-name {
+    font-size: 0.9em;
+    color: #555;
+    font-style: italic;
 }
 
 input[type="submit"] {
@@ -64,62 +43,14 @@ input[type="submit"]:hover {
 
 /* ===== Main content ===== */
 main {
-    padding: 2em;
-    max-width: 1000px;
-    margin: auto;
+    padding: 1em;
+    width: 100%;
+    margin: 0px;
     background: white;
     box-shadow: 0 0 10px rgba(0,0,0,0.05);
     border-radius: 8px;
-}
-
-/* ===== Forms ===== */
-form {
-    margin-bottom: 2em;
-    padding: 1.2em;
-    background: #fafafa;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-}
-
-label {
-    font-weight: bold;
     display: block;
-    margin-top: 0.6em;
-}
-
-input[type="text"],
-textarea,
-select,
-input[type="number"],
-input[type="file"] {
-    width: 100%;
-    padding: 0.6em;
-    margin-top: 0.4em;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 0.95em;
     box-sizing: border-box;
-    background: white;
-}
-
-textarea {
-    min-height: 100px;
-}
-
-input[type="submit"] {
-    background: #3498db;
-    color: white;
-    border: none;
-    padding: 0.6em 1.2em;
-    font-size: 1em;
-    border-radius: 6px;
-    cursor: pointer;
-    margin-top: 1em;
-    transition: background 0.2s;
-}
-
-input[type="submit"]:hover {
-    background: #2980b9;
 }
 
 /* ===== Radio buttons ===== */
@@ -129,19 +60,6 @@ input[type="radio"] {
 
 form div {
     margin-bottom: 0.5em;
-}
-
-/* ===== Sections ===== */
-#scenario_initial,
-#resultat,
-#analyse,
-#choix_regle,
-#rule_str {
-    margin-top: 2em;
-    padding: 1.2em;
-    border-left: 4px solid #3498db;
-    background: #f9fafe;
-    border-radius: 4px;
 }
 
 #log {
@@ -163,4 +81,382 @@ em {
     input[type="text"], textarea, select {
         font-size: 1em;
     }
+}
+
+
+/* =========================
+   Palette & bases du thème
+   ========================= */
+:root{
+  --blue: #59b7ff;
+  --blue-hover: #4aa7ec;
+  --blue-900: #2c3e50;
+  --grey-100:#f5f7fa;
+  --grey-150:#f0f0f0;
+  --grey-300:#d9d9d9;
+  --text:#333;
+  --white:#fff;
+}
+
+body{
+    font-family: Arial, sans-serif;
+  background: var(--grey-100);
+  color: var(--text);
+}
+
+/* =========================
+   Header (on garde ta logique)
+   ========================= */
+header{
+  background: linear-gradient(180deg, #46a8fb 0%, #3aa0f9 100%);
+  color: var(--white);
+  padding: 24px;
+  display:flex;
+  justify-content:center; /* titre centré dans la barre bleue */
+  position: relative;     /* permet de positionner les formulaires à droite si besoin */
+}
+
+header h1{
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  background: var(--white);
+  color: #1e3552;
+  padding: 14px 22px;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.06);
+}
+
+/* Si tu gardes des formulaires en haut à droite dans le header */
+.header-forms{
+  position:absolute;
+  right: 24px;
+  top: 24px;
+  display:flex;
+  gap: 14px;
+  align-items:center;
+}
+
+/* =========================
+   Conteneur principal
+   ========================= */
+
+main{
+  display: block;
+  width: 90%;
+  margin: 24px auto;
+  background: var(--white);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.06);
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+/* =========================
+   Panneaux rétractables
+   ========================= */
+.section{
+  margin: 18px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--grey-150);
+}
+
+.section__bar{
+  background: var(--grey-300);
+  color: #1e3552;
+  padding: 10px 14px;
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.section__toggle{
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display:grid; place-items:center;
+  background: var(--blue);
+  color: var(--white);
+  font-weight: 900;
+  cursor: pointer;
+  user-select: none;
+}
+
+.section__body{
+  padding: 16px;
+  background: var(--grey-150);
+}
+
+.section.is-collapsed .section__body{ display:none; }
+
+.section__body--with-log {
+    display: flex;
+    gap: 1em;
+    align-items: flex-start; /* évite le chevauchement vertical */
+}
+
+/* colonne principale */
+.section__main {
+    flex: 1;
+    min-width: 0; /* évite que ça déborde */
+}
+
+/* colonne log */
+.section__log {
+    flex: 1;
+    background: #f8f9fa;
+    border-left: 2px solid #ddd;
+    padding: 1em;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 0.9em;
+    overflow-y: auto;
+    max-height: 80vh;
+    min-width: 250px;
+}
+
+.section__body--2cols {
+    display: flex;
+    gap: 2em;
+    align-items: flex-start; /* évite le chevauchement vertical */
+}
+
+.section__col1,
+.section__col2 {
+    flex: 1;
+    min-width: 0;
+}
+
+.section__col1 textarea,
+.section__col1 input,
+.section__col2 textarea,
+.section__col2 input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* responsive: pile sur petit écran */
+@media (max-width: 800px) {
+    .section__body--2cols {
+        flex-direction: column;
+    }
+}
+
+.rule-block {
+    background: white;
+    color: #2196f3;
+    padding: 1em;
+    border-radius: 12px;
+    margin-bottom: 1.5em;
+}
+
+.rule-title {
+    font-weight: bold;
+    margin-bottom: 0.3em;
+}
+
+.rule-text {
+    margin: 0;
+}
+
+.exception-block {
+    background: #64b5f6; /* bleu clair */
+    color: white;
+    margin: 0.5em 0;
+    padding: 0.8em;
+    border-radius: 10px;
+}
+
+.exception-block label {
+    display: block;
+    cursor: pointer;
+}
+
+.exception-title {
+    font-weight: bold;
+}
+
+.adaptation {
+    font-style: italic;
+    display: inline-block;
+    margin-top: 0.3em;
+}
+
+.no-exception {
+    margin: 0.5em 0;
+    color: #ddd;
+}
+
+.submit-btn {
+    margin-top: 1em;
+    padding: 0.6em 1.2em;
+    border: none;
+    border-radius: 6px;
+    background: white;
+    color: #1976d2;
+    font-weight: bold;
+    cursor: pointer;
+}
+.submit-btn:hover {
+    background: #0d47a1;
+}
+
+
+/* =========================
+   Lignes de paramètres (API / RB / W)
+   ========================= */
+.param-row{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.param-row label{
+  display:inline-block;        /* override de ton label global */
+  width: 180px;                /* aligne joliment les trois libellés */
+  margin: 0;
+  font-weight: 700;
+  color: #1e3552;
+}
+
+/* Champs “pilule” */
+.pill-input{
+  background: #eaf4ff;
+  border: none;
+  border-radius: 14px;
+  padding: 10px 12px;
+  min-width: 320px;
+  font-size: 0.8rem;
+  outline: none;
+}
+
+/* Boutons "change" / "send" */
+.btn{
+  background: var(--blue);
+  color: var(--white);
+  border: none;
+  border-radius: 14px;
+  padding: 8px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.btn:hover{ background: var(--blue-hover); }
+
+/* =========================
+   Inputs & textarea façon mockup
+   ========================= */
+
+textarea {
+  min-height: 70px !important;
+  resize: vertical !important;
+  border: 1px solid #ccc !important;
+  border-radius: 6px !important;
+  padding: 0.6em 0.7em !important;
+}
+
+.text-pills textarea,
+.text-pills input[type="text"]{
+  background: #eaf4ff;
+  line-height: 1.4;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 0.5em 0.7em;
+  background: #fff;
+  box-sizing: border-box;
+  width: 100%;
+  outline: none;
+  font-size: 0.8rem;
+}
+.text-pills .send-wrap{ display:flex; gap: 12px; align-items: stretch; }
+.text-pills .send-wrap textarea{ flex:1; }
+.text-pills .send-wrap .btn{ align-self: center; }
+
+/* =========================
+   Zone 2 colonnes (gauche dynamique / droite logs)
+   ========================= */
+.split{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+@media (max-width: 900px){
+  .split{ grid-template-columns: 1fr; }
+}
+
+/* Cartes grises pour “Scenario in memory”, “Associated decomposition” */
+.info-pill{
+  background: #eaf4ff;
+  border-radius: 12px;
+  padding: 12px 14px;
+  border: 1px solid #dbeafe;
+  color: #1e3552;
+  font-weight: 600;
+}
+
+/* =========================
+   Liste de règles (boutons numérotés)
+   ========================= */
+.rule-list{ display:flex; flex-direction:column; gap: 10px; }
+
+.rule-option{
+  display:flex; align-items:center; gap: 12px;
+  background: var(--blue);
+  color: var(--white);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.rule-number{
+  background: var(--white);
+  color: var(--blue);
+  border-radius: 8px;
+  padding: 2px 10px;
+  font-weight: 800;
+}
+
+/* Rendre les radio + label cliquables façon bouton */
+.rule-option input[type="radio"]{ display:none; }
+.rule-option label{
+  margin:0;
+  font-weight:600;
+  cursor:pointer;
+}
+.rule-option:has(input[type="radio"]:checked){
+  background: var(--blue-hover);
+}
+
+/* =========================
+   Champs d’upload discrets & nom de fichier
+   ========================= */
+.upload-field{
+  display:flex; align-items:center; gap: 8px;
+}
+.upload-field input[type="file"]{
+  max-width: 220px;
+}
+.file-name{
+  font-size: .8rem;
+  color: #555;
+  font-style: italic;
+}
+
+/* =========================
+   Petits raffinements
+   ========================= */
+fieldset,
+form{
+  background: transparent; /* on laisse la section gérer le fond */
+  border: none;
+  margin: 0; padding: 0;
+}
+
+hr.separator{
+  border: none; height: 1px;
+  background: #e6e6e6;
+  margin: 16px 0;
 }

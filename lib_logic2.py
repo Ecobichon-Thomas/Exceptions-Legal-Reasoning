@@ -138,7 +138,7 @@ class Rule:
     def __str__(self):
         premisses_str = ' ^ '.join(str(p) for p in self.premisses)
         conclusion_str = ' ^ '.join(str(c) for c in self.conclusion)
-        return f"Rule: {premisses_str} => {conclusion_str}"
+        return f"{premisses_str} => {conclusion_str}"
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
@@ -505,9 +505,9 @@ def scenario_check_web4_test(S, rulebase,deja_appliquees):
             temp.remove(i)
     regles_possibles = temp
 
-    if len(regles_possibles) > 1:
+    if len(regles_possibles) >= 1:
         output.append("\n")
-        output.append("Plusieurs règles correspondent à la situation:")
+        output.append("Règles applicables:")
         for i in regles_possibles:
             output.append(f"- Règle {i} : {rulebase.rules_original[i]}")
 
@@ -522,10 +522,6 @@ def scenario_check_web4_test(S, rulebase,deja_appliquees):
                     output.append(f"La règle {r2_index} est prioritaire sur la règle {r1_index}, on écarte la règle {r1_index}")
     
         regles_possibles = [r for i, r in enumerate(regles_possibles) if i not in rows_to_remove]
-    elif len(regles_possibles) == 1:
-        output.append("\n")
-        output.append("Voici l'unique règle qui correspond à la situation:")
-        output.append(f"- Règle {regles_possibles[0]} : {rulebase.rules_original[regles_possibles[0]]}")
 
     return {
         "output":output,

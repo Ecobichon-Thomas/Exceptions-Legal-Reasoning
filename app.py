@@ -66,7 +66,9 @@ def init_RB():
     if not Bool:
         shutil.copy("RB.txt", "uploads/RB_working.txt")
         session["selected_rb_path"] = "uploads/RB_working.txt"
+        session["original_rb_path"] = "RB.txt"
         session["upload_init"]=True
+        session["selected_w_path"] = w_path
 
     rb_path = "uploads/RB_working.txt"
 
@@ -129,6 +131,8 @@ W_files = {"W test":"W.txt"}
 
 RB_files = {"RB test":"RB.txt"}
 
+html_file = "Application.html"
+
 session_cleared = False
 @app.before_request
 def clear_session_once_per_server():
@@ -141,8 +145,7 @@ def clear_session_once_per_server():
 
 @app.route("/")
 def index():
-    return render_template(
-        "Application.html")
+    return render_template(html_file)
 
 # @app.route("/start")
 # def start():
@@ -172,36 +175,41 @@ def upload_rules():
     w_choice = request.form.get("w_choice")
     rb_choice = request.form.get("rb_choice")
 
-    if w_choice == "__upload__" and rb_choice == "__upload__":
+    if w_choice == "__upload__" :
         file_w = request.files.get("uploaded_w")
-        file_rb = request.files.get("uploaded_rb")
-
-        if not (file_w and file_rb):
+        if not file_w:                #FIX
             return "Tous les fichiers sont requis", 400
-
         w_path = os.path.join(app.config["UPLOAD_FOLDER"], secure_filename(file_w.filename))
-        rb_original_path = os.path.join(app.config["UPLOAD_FOLDER"], secure_filename(file_rb.filename))
-
         file_w.save(w_path)
+        session["selected_w_path"] = w_path
+    else :
+        if w_choice not in W_files:
+            return "Fichiers prédéfinis invalides", 400
+        
+        w_original_path = W_files[w_choice]
+        session["selected_w_path"] = w_original_path
+
+
+    if rb_choice == "__upload__":
+        file_rb = request.files.get("uploaded_rb")
+        if not file_rb:                #FIX
+            return "Tous les fichiers sont requis", 400
+        rb_original_path = os.path.join(app.config["UPLOAD_FOLDER"], secure_filename(file_rb.filename))
         file_rb.save(rb_original_path)
 
         rb_working_path = os.path.join(app.config["UPLOAD_FOLDER"], "RB_working.txt")
         shutil.copy(rb_original_path, rb_working_path)
 
-        session["selected_w_path"] = w_path
+        session["original_rb_path"] = rb_original_path
         session["selected_rb_path"] = rb_working_path
-
     else:
-        if w_choice not in W_files or rb_choice not in RB_files:
+        if rb_choice not in RB_files:
             return "Fichiers prédéfinis invalides", 400
         
-        w_original_path = W_files[w_choice]
         rb_original_path = RB_files[rb_choice]
-
         rb_working_path = os.path.join(app.config["UPLOAD_FOLDER"], "RB_working.txt")
         shutil.copy(rb_original_path, rb_working_path)
-
-        session["selected_w_path"] = w_original_path
+        session["original_rb_path"] = rb_original_path
         session["selected_rb_path"] = rb_working_path
 
     return redirect(url_for("index"))
@@ -210,23 +218,30 @@ def upload_rules():
 
 @app.route("/traiter", methods=["GET","POST"])
 def traiter():
-    print("TRAITER")
     scenario = (request.form.get('scenario') or request.args.get('scenario') or "").strip()             # Scenario dans le système, déjà décomposé
-    print("secnario",scenario)
     resultat = request.form.get("resultat") or request.args.get("resultat") or ""             # Décomposition de ce scénario
-    print("resultat",resultat)
     scenario1 = (request.form.get("scenario1") or request.args.get("scenario1") or "").strip()           # Nouveau scénario si l'utilisateur en a fourni un
     complement = request.form.get("complement") or request.args.get("complement")         #Complément au prompt si l'utilisateur n'est pas satisfait par la décomposition
 
     if scenario1 != "":
+        print("Nouveau scénario")
         selected_api = session.get("selected_api", "HuggingFace")  # sauvegarde le choix actuel
+        upload_init = session.get("upload_init", False)
+        print("upload_init",upload_init)
+        print("session",session)
         try:
-            w_path = session["selected_w_path"]
             rb_path = session["selected_rb_path"]
+            print("rb_path",rb_path)
+            print("original_rb_path",session["original_rb_path"])
+            shutil.copy(session["original_rb_path"], session["selected_rb_path"])
+            w_path = session["selected_w_path"]
+            print("w_path",w_path)
         except:
             None
         session.clear()
+        print("CLEAR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         session["selected_api"] = selected_api  # restaure le choix après reset
+        session["upload_init"] = upload_init
         try :
             session["selected_w_path"] = w_path
             session["selected_rb_path"] = rb_path
@@ -235,12 +250,10 @@ def traiter():
         scenario = scenario1
     if scenario == "":              # Cas scénario vide
         session["resultat"] = "Aucun scénario fourni."
-        return render_template("Application.html")
+        return render_template(html_file)
         
     choice = request.form.get("user_choice", None)              # On récupère le choix de l'utilisateur si il y en a un (choix de quelle règle appliquer)
     Rb = init_RB()              # Initialisation de la base de règles
-    print("RB1",Rb)
-    print("session.get(decomposition)",session.get("decomposition"))
 
     if not session.get("decomposition") or (complement != None):                # Si on a la decomposition de S en mémoire ou que la décomposition n'est pas satisfaisante
         premises = ';'.join(Rb.Var_dictionnary._variables.keys())
@@ -277,15 +290,12 @@ def traiter():
         session["appliquees"] = []
         log = "Génération d'une extension:"
     else :
-        #resultat = request.form.get("resultat", "")
         S = session.get("decomposition", [])
         log = request.form.get("log") or request.args.get("log") or ""
 
-    print("S",S)
-    print("resultat")
     deja_appliquees = session.get("appliquees", [])
 
-    if (choice is not None) and (choice != "-1"):                 # Si l'utilisateur a choisi
+    if (choice is not None) and (choice != "-1") and (choice != "-2"):                 # Si l'utilisateur a choisi
         # on ajoute directement la règle puis on passe à la suite
         deja_appliquees = session.get("appliquees", [])
 
@@ -299,7 +309,7 @@ def traiter():
             if temp not in S:
                 S.append(temp)
 
-        log += "\n \n"+f"On applique la règle {choice} : {Rb.rules_original[choice]} "
+        log += "\n \n"+f"Application de la règle {choice} : {Rb.rules_original[choice]} "
 
         deja_appliquees.append(choice)
         session["appliquees"] = deja_appliquees
@@ -312,24 +322,31 @@ def traiter():
     session["resultat"]=resultat
     session["scenario"]=scenario
 
-    if len(indices)==0 or choice=="-1":              # Plus aucune règle applicable, on s'arrête de générer l'extension
-        if len(deja_appliquees) == 0:               # Si on a appliqué aucune règle on renvoie une erreur
-            return render_template("Application.html",
-                                   No_rule = True)
-        
-        else:               # Sinon on passe à la génération des exceptions
-            #log +="\n \n Il n'y a plus de règles applicables: Fin de la génération de l'extension"
-            return render_template("Application.html",
+    if len(indices)==0 and len(deja_appliquees) == 0:              # Si aucune règle n'est applicable est aucune règle n'a été appliquée, message d'erreur
+        return render_template(html_file,
+                                No_rule = True)
+    elif choice=="-1":              # génération d'une exception
+            return render_template(html_file,
                                    extension = True,
                                    log=log)
-        
-    else:               # Si plusieurs règles possibles, on transmet les choix
+    elif choice=="-2":              # recap
+        return render_template(html_file,
+                               recap = True,
+                               regles_appliquees = [Rb.rules[i] for i in deja_appliquees],
+                               situation_finale = [str(s) for s in S],
+                               log=log)
+    else:               # Si règles possibles, on transmet les choix 
+        # (si aucune règle possible on pourra alors demander un recap, ou chercher une exception à la dernière règle appliquée)
         log +="\n".join(output)
-        return render_template("Application.html",
+        pas_premier = True
+        if len(deja_appliquees)==0:
+            pas_premier = False
+        return render_template(html_file,
                                 conflit=True,
                                 options=options,
                                 indices=indices,
-                                log=log)
+                                log=log,
+                                pas_premiere_regle=pas_premier)
 
 @app.route("/exceptions", methods=["POST"])
 def exception():
@@ -358,15 +375,13 @@ def exception():
 
     if choix_ex["options"] == []:
         log +=f"\n \n Aucune des règles de la base n'est suffisamment proche pour proposer une adaptation d'exception"
-        return redirect(url_for(
-                "traiter",
-                scenario=scenario,
-                log=log,
-                resultat=resultat
-            ))
+        return render_template(
+            html_file,
+            Pas_adaptation = True,
+            log = log)
     
-    exceptions_string = copy.deepcopy(choix_ex["regles_adaptees"])
-    exceptions_lists = copy.deepcopy(choix_ex["regles_adaptees"])
+    adaptations_string = copy.deepcopy(choix_ex["regles_adaptees"])
+    adaptations_list = copy.deepcopy(choix_ex["regles_adaptees"])
     for i,regle in enumerate(choix_ex["regles_adaptees"]):
         for j,exception in enumerate(regle) :
             P,C = exception
@@ -374,18 +389,18 @@ def exception():
             C_list = [str(v) for v in C]
             P_str = ' ^ '.join(str(s) for s in P)
             C_str = ' ^ '.join(str(c) for c in C)
-            exceptions_string[i][j] = (f"{P_str} => {C_str}")
-            exceptions_lists[i][j] = [P_list,C_list]
-    session["adaptations"]=exceptions_lists
+            adaptations_string[i][j] = (f"{P_str} => {C_str}")
+            adaptations_list[i][j] = [P_list,C_list]
+    session["adaptations"]=adaptations_list
 
     return render_template(
-        "Application.html",
+        html_file,
         resultat=resultat,
         scenario = scenario,
         options_rules = choix_ex["options"],
         indices_rules = choix_ex["indices"],
         options_exceptions = choix_ex["exceptions associées"],
-        exceptions_string = exceptions_string,
+        adaptations_string = adaptations_string,
         log=log)
 
 @app.route("/proposition", methods=["POST"])
@@ -420,19 +435,15 @@ def proposition():
             f.write("\n"+ adaptation_string)
 
         Rb = init_RB()
-        print("Rb",Rb)
         Rb.init_S(S)
-        print("S",S)
         ancienne_conclu = Rb.rules[deja_appliquees[-1]].conclusion              # suppression de l'ancienne conclu
         nouvelle_decomposition = difference_premisses (session.get("decomposition", []),ancienne_conclu,Rb.W)
         session["decomposition"] = nouvelle_decomposition
 
         # comme on ajoute la nouvelle règle à la fin, son indice correspond au compteur
-        log +=f"\n \n Création d'une exception {Rb.rules[Rb.compteur-1]} à la règle:{Rb.rules[deja_appliquees[-1]]}"
-        log +=f"\n \n Suite à la création réussie d'une exception à la règle:{Rb.rules[deja_appliquees[-1]]} on annule son application pour poursuivre la génération d'une extension"
+        log +=f"\n \n Création d'une exception: {Rb.rules[Rb.compteur-1]} \n à la règle: {Rb.rules[deja_appliquees[-1]]}"
+        log +=f"\n \n Suite à la création réussie d'une exception à la règle: {Rb.rules[deja_appliquees[-1]]} \n on annule son application pour poursuivre la génération d'une extension"
         session["appliquees"] = deja_appliquees[:-1]                # Suppression de la dernière règle appliquée
-        print("deja_appliquees",session["appliquees"])
-
     #regle_exception = request.form.get("choix_regle_exception", "")
 
     return redirect(url_for(
