@@ -1,0 +1,263 @@
+# Translations template for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-08-27 13:42+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: lib_logic2.py:504
+msgid "Génération d'une extension:"
+msgstr ""
+
+#: lib_logic2.py:515
+msgid "Règles applicables"
+msgstr ""
+
+#: lib_logic2.py:517 templates/Application.html:248
+#: templates/Application.html:303
+msgid "Règle"
+msgstr ""
+
+#: lib_logic2.py:527
+msgid "La règle"
+msgstr ""
+
+#: lib_logic2.py:527
+msgid "est prioritaire sur la règle"
+msgstr ""
+
+#: lib_logic2.py:527
+msgid "on écarte la règle"
+msgstr ""
+
+#: lib_logic2.py:554
+msgid ""
+"Aucune des règles de la base n'est suffisamment proche pour proposer une "
+"adaptation d'exception"
+msgstr ""
+
+#: lib_logic2.py:822
+msgid "Distance de Hamming"
+msgstr ""
+
+#: lib_logic2.py:827 templates/Application.html:11
+msgid "Seuil"
+msgstr ""
+
+#: lib_logic2.py:828
+msgid "Minimale"
+msgstr ""
+
+#: lib_logic2.py:829 templates/Application.html:12
+msgid "Seuil Minimal"
+msgstr ""
+
+#: lib_logic2.py:835
+msgid "Aucun scénario fourni."
+msgstr ""
+
+#: lib_logic2.py:836
+msgid "Application de la règle"
+msgstr ""
+
+#: lib_logic2.py:837
+msgid "Aucune des exceptions proposée n'a été validée"
+msgstr ""
+
+#: lib_logic2.py:838
+msgid "Création d'une exception"
+msgstr ""
+
+#: lib_logic2.py:839
+msgid "à la règle"
+msgstr ""
+
+#: lib_logic2.py:840
+msgid "Suite à la création réussie d'une exception à la règle"
+msgstr ""
+
+#: lib_logic2.py:841
+msgid "on annule son application pour poursuivre la génération d'une extension"
+msgstr ""
+
+#: templates/Application.html:23
+msgid "Sélection des paramètres:"
+msgstr ""
+
+#: templates/Application.html:47 templates/Application.html:96
+msgid "Changer"
+msgstr ""
+
+#: templates/Application.html:52
+msgid "Base de savoir:"
+msgstr ""
+
+#: templates/Application.html:60 templates/Application.html:83
+msgid "Déposez vos fichiers"
+msgstr ""
+
+#: templates/Application.html:75
+msgid "Base de Règles:"
+msgstr ""
+
+#: templates/Application.html:105
+msgid "Veuillez soumettre un scénario ci-dessous :"
+msgstr ""
+
+#: templates/Application.html:112
+msgid "Votre scénario"
+msgstr ""
+
+#: templates/Application.html:114 templates/Application.html:125
+#: templates/Application.html:233
+msgid "Envoyer"
+msgstr ""
+
+#: templates/Application.html:123
+msgid ""
+"Si la décomposition ne vous convient pas, ajoutez des précisions pour le "
+"llm ici"
+msgstr ""
+
+#: templates/Application.html:138
+msgid "Scénario en mémoire:"
+msgstr ""
+
+#: templates/Application.html:144
+msgid "Décomposition associée :"
+msgstr ""
+
+#: templates/Application.html:155
+msgid "Traitement :"
+msgstr ""
+
+#: templates/Application.html:161
+msgid "Aucune règle ne s'applique au scénario fourni, veuillez ré-essayer"
+msgstr ""
+
+#: templates/Application.html:172
+msgid "Choix de la règle à appliquer :"
+msgstr ""
+
+#: templates/Application.html:173
+msgid "Sélectionnez une règle parmi celles possibles ci-dessous:"
+msgstr ""
+
+#: templates/Application.html:187
+msgid "Ou:"
+msgstr ""
+
+#: templates/Application.html:191
+msgid "Générer une exception à partir de la dernière règle appliquée"
+msgstr ""
+
+#: templates/Application.html:196
+msgid "Terminer la génération de l'extension"
+msgstr ""
+
+#: templates/Application.html:199 templates/Application.html:280
+#: templates/Application.html:326
+msgid "Valider le choix"
+msgstr ""
+
+#: templates/Application.html:208
+msgid "Création d'une exception à partir de la dernière règle sélectionnée"
+msgstr ""
+
+#: templates/Application.html:209
+msgid "Choix de la distance utilisée pour le choix de l'exception:"
+msgstr ""
+
+#: templates/Application.html:218
+msgid "Choix de la méthode de sélection:"
+msgstr ""
+
+#: templates/Application.html:228
+msgid "Choix du seuil associé: "
+msgstr ""
+
+#: templates/Application.html:237
+msgid ""
+"Aucune règle suffisament proche n'a été détectée, pas de création "
+"d'exception proposée"
+msgstr ""
+
+#: templates/Application.html:239
+msgid ""
+"Voici les règles à partir desquelles nous proposons de créer une "
+"exception :"
+msgstr ""
+
+#: templates/Application.html:264
+msgid "Exception"
+msgstr ""
+
+#: templates/Application.html:265
+msgid "Adaptation proposée :"
+msgstr ""
+
+#: templates/Application.html:270
+msgid "Aucune exception connue"
+msgstr ""
+
+#: templates/Application.html:277
+msgid "Ne pas sélectionner d'exception"
+msgstr ""
+
+#: templates/Application.html:285
+msgid "Aucune règle n'est suffisament proche pour proposer une adaptation "
+msgstr ""
+
+#: templates/Application.html:291
+msgid "Poursuivre"
+msgstr ""
+
+#: templates/Application.html:296
+msgid "Pas de règle choisie: "
+msgstr ""
+
+#: templates/Application.html:300
+msgid "Récapitulatif de la génération de l'extension"
+msgstr ""
+
+#: templates/Application.html:308
+msgid "Situation finale :"
+msgstr ""
+
+#: templates/Application.html:313
+msgid ""
+"Voulez-vous créer une nouvelle base de règle comprenant les règles qui "
+"ont été créées?"
+msgstr ""
+
+#: templates/Application.html:314
+msgid ""
+"Vous pourrez retrouver le base de règles créée dans la liste déroulante "
+"en haut, sélectionnez la si vous voulez soumettre un autre scénario en "
+"tenant compte de ces nouvelles règles"
+msgstr ""
+
+#: templates/Application.html:321
+msgid "Oui"
+msgstr ""
+
+#: templates/Application.html:323
+msgid "Non"
+msgstr ""
+
+#: templates/Application.html:332
+msgid "Log d'application des règles: "
+msgstr ""
+

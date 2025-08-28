@@ -1,0 +1,2 @@
+assassinat >> meurtre
+~ ( pas_condamnation & perpétuité ) & ~ ( moins_30 & plus_50 ) & ~ ( entre30_50 & plus_50 )

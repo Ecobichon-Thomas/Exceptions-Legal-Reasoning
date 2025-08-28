@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function updateSeuilVisibility() {
         const selected = document.querySelector('input[name="selection"]:checked');
-        if (selected && (selected.value === "Seuil" || selected.value === "Seuil Minimal")) {
+        if (selected && (selected.value === translations.seuil || selected.value === translations.seuilMinimal)) {
             seuilContainer.style.display = "block";
             seuilInput.disabled = false;
         } else {

@@ -2,7 +2,9 @@
 import numpy as np
 from logic import *
 from scipy.spatial import distance
-
+import shutil
+from flask_babel import gettext as _  
+import os
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 ###### GESTION DES VARIABLES #######
@@ -492,11 +494,14 @@ def select_fct_treshold_minimal (Dist_vector,threshold):
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
-def scenario_check_web4_test(S, rulebase,deja_appliquees):
+def scenario_check_web4_test(S, rulebase,deja_appliquees,premier_log):
     rulebase.init_S(S)
     output = []
 
     regles_possibles = rulebase.inclusion([])
+
+    if premier_log:
+        output.append(f" {_('Génération d\'une extension:')} ")
 
     temp = regles_possibles.copy()
     for i in regles_possibles:             #Eliminer règles donc la conclusion est incompatible avec la situation (et celles déjà appliquées)
@@ -507,9 +512,9 @@ def scenario_check_web4_test(S, rulebase,deja_appliquees):
 
     if len(regles_possibles) >= 1:
         output.append("\n")
-        output.append("Règles applicables:")
+        output.append( f"{_("Règles applicables")} :")
         for i in regles_possibles:
-            output.append(f"- Règle {i} : {rulebase.rules_original[i]}")
+            output.append(f"- {_('Règle')} {i} : {rulebase.rules_original[i]}")
 
         C_matrix = rulebase.compatibility_matrix(regles_possibles)
         rows_to_remove = set(np.where(C_matrix == 1)[0])                # suppression des règles moins prioritaires
@@ -519,7 +524,7 @@ def scenario_check_web4_test(S, rulebase,deja_appliquees):
                 if C_matrix[i, j] == 1:
                     r1_index = regles_possibles[i]
                     r2_index = regles_possibles[j]
-                    output.append(f"La règle {r2_index} est prioritaire sur la règle {r1_index}, on écarte la règle {r1_index}")
+                    output.append(f" {_('La règle')} {r2_index} {_('est prioritaire sur la règle')} {r1_index}, {_('on écarte la règle')} {r1_index}")
     
         regles_possibles = [r for i, r in enumerate(regles_possibles) if i not in rows_to_remove]
 
@@ -539,13 +544,19 @@ def scenario_check_web4_test(S, rulebase,deja_appliquees):
 def choix_exception(distance_method, rulebase, selection_fct_and_args,regle_choisie):
     selection_fct = selection_fct_and_args[0]
     args = selection_fct_and_args[1:]
+    print("args",args)
 
     selected_indices = globals()[selection_fct](getattr(rulebase, distance_method)(regle_choisie), *args)               # on sélectionne les règles dont la distance à regle_choisie satisfait les critères de la fonction de sélection choisie
     indices_similaires,exceptions_associees,adaptations_associees = exceptions(rulebase, selected_indices,rulebase.rules[regle_choisie])                # On filtre et élimine les règles qui n'ont pas d'exceptions
+    options = [rulebase.rules_original[i] for i in indices_similaires]
+    output=""
+    if options == []:
+        output = f"\n \n {_('Aucune des règles de la base n\'est suffisamment proche pour proposer une adaptation d\'exception')} "
     return {"indices":indices_similaires,
-            "options":[rulebase.rules_original[i] for i in indices_similaires],
+            "options":options,
             "exceptions associées":[[rulebase.rules_original[i] for i in liste] for liste in exceptions_associees],
-            "regles_adaptees":adaptations_associees}
+            "regles_adaptees":adaptations_associees,
+            " C":output}
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
@@ -754,4 +765,190 @@ def str_to_formula(formula_str, Rb):                # à partir d'un string cré
     else:
         return formula_creator(tokens, token_to_var)
     
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+###### Fonctions de app.py ######
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+def call_llm(prompt,MODELS,clients,session):
+    api_order = [session.get("selected_api", "HuggingFace"), "Mistral", "HuggingFace"]
+    tried = set()
+    for api_name in api_order:
+        if api_name in tried:
+            continue
+        tried.add(api_name)
+        try:
+            if api_name == "Mistral":
+                response = clients[0].chat.complete(
+                    model=MODELS[0],
+                    messages=[{"role": "user", "content": prompt}])
+            else:
+                response = clients[1].chat.completions.create(
+                    model=MODELS[1],
+                    messages=[{"role": "user", "content": prompt}])
+            session["selected_api"] = api_name
+            return response.choices[0].message.content
+        except Exception as e:
+            if "capacity" in str(e).lower() or "rate limit" in str(e).lower():
+                continue
+            raise e
+    raise RuntimeError("Aucune API disponible actuellement.")
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+def get_files(session,add=False,rb_path=None):
+    lang = session.get("lang", "fr")
+    base_rb = lang+"/RB/"
+    base_w = lang+"/W/"
+
+    txt_files_rb = [f for f in os.listdir(base_rb) if f.endswith(".txt")]                  # Tout les fichiers .txt d rb
+    txt_names_rb = [p[:-4] for p in txt_files_rb]             # On enlève le .txt pour les labels
+    paths_rb = [base_rb+p for p in txt_files_rb]
+    default_rb_path = f"{base_rb}RB_test.txt"
+
+    txt_files_w = [f for f in os.listdir(base_w) if f.endswith(".txt")]                  # Tout les fichiers .txt d rb
+    txt_names_w = [p[:-4] for p in txt_files_w]             # On enlève le .txt pour les labels
+    paths_w = [base_w+p for p in txt_files_w]
+    default_w_path = f"{base_w}W_test.txt"
+    
+    W_files = dict(zip(txt_names_w, paths_w))
+    RB_files = dict(zip(txt_names_rb, paths_rb))
+    return default_w_path, default_rb_path, W_files, RB_files
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+def get_distance_method():                  # uniquement pour que ce soit pas chargé initialement et que la traduction se fasse bien
+    return {_("Distance de Hamming"): "dist_hamming"}
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+def get_selection_method():                  # uniquement pour que ce soit pas chargé initialement et que la traduction se fasse bien
+    SELECTION_METHODS = {_("Seuil"): "select_fct_treshold",
+                         _('Minimale'):"select_fct_minimal",
+                         _('Seuil Minimal'):"select_fct_treshold_minimal"}
+    return SELECTION_METHODS
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+def get_log(key):
+    dic = {1 : _("Aucun scénario fourni."),
+           2 : _('Application de la règle'),
+           3 : _('Aucune des exceptions proposée n\'a été validée'),
+           4 : _('Création d\'une exception'),
+           5 : _('à la règle'),
+           6 : _('Suite à la création réussie d\'une exception à la règle'),
+           7 : _('on annule son application pour poursuivre la génération d\'une extension')}
+    return dic[key]
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+def init_RB(session):
+    default_w_path, default_rb_path, W_files, RB_files = get_files(session)
+    Bool = session.get("upload_init", False)
+    Rb = Rule_Base()
+    w_path = session.get("selected_w_path", default_w_path)
+    if not Bool:
+        shutil.copy(default_rb_path, "uploads/RB_working.txt")
+        session["selected_rb_path"] = "uploads/RB_working.txt"
+        session["original_rb_path"] = default_rb_path
+        session["upload_init"]=True
+        session["selected_w_path"] = w_path
+
+    rb_path = "uploads/RB_working.txt"
+    P=[]
+    C=[]
+    with open(rb_path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):  # Ignore lignes vides ou commentaires
+                continue
+            if ">" in line:
+                gauche, droite = line.split(">", 1)  # Split en deux parties seulement
+                conditions = gauche.strip().split()
+                conclusions = droite.strip().split()
+
+                P.append(conditions)
+                C.append(conclusions)
+            else:
+                print("Ligne ignorée (pas de '>'):", line)
+    with open(w_path, "r", encoding="utf-8") as inp:
+        W = list(inp.read().splitlines())
+    Rb.add_W(W)
+    Rb.add_rules(P, C)
+    return Rb
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+def get_prompt(scenario,premises,session):
+    lang = session.get("lang", "fr")
+    if lang == "fr":
+        prompt = ("Tu es un expert des textes juridiques et de la décomposition de situations juridiques en prémisses"
+        +"Décompose le scénario sous la forme d'une liste de prémisses, en utilisant le caractère ; comme séparateur dans ton retour."
+        +"Voici un exemple de scénario, 'Une voiture a traversé un feu rouge', le résultat attendu serait, 'véhicule;traverse_feu_rouge': \n " 
+        +"Scénario: \n"+ scenario 
+        +"\n Liste des prémisses déjà en mémoire qui peuvent être réutilisés si le scénario comporte des éléments similaires:"
+        +premises
+        +"\n Ne crée de nouveau prémisse que si c'est nécessaire."
+        +"\n Ne rajoute des prémisses que lorsque tu as de l'information explicite, ne fait pas d'inférence. "
+        +"\n Par exemple une ambulance n'est pas forcément en état d'urgence et n'a PAS FORCEMENT son gyrophare allumé! C'est le cas uniquement si c'est PRECISE, généralise cet exemple à tout les prémisses"
+        +"\n Ton retour ne doit comporter que la liste des prémisses correspondant au scénario dans le format demandé"
+        +"\n Si certains prémisses sont des négations, utilise la caractère ~ au début de la chaîne. Par exemple:"
+        +"\n 'Une ambulance avec son gyrophare n'a pas traversé le parc' donnerait:"
+        +"\n véhicule;gyrophare;etat_urgence;~traverse_parc" 
+        +"\n 'et, Une ambulance ne s'est pas arrêté au feu rouge' donnerait:"
+        +"\n véhicule;traverse_feu_rouge" 
+        +"\n Ton retour sera utilisé dans le contexte de textes juridiques. Adapte tes réponses à ce contexte."
+        +"\n Attention, veille à créer des catégories qui font sens, un vélo peut être vu comme un véhicule "
+        +"mais pas dans le contexte de la règle qui interdit aux véhicules motorisés de traverser un parc "
+        +"\n Attention!! ne renvoie que un string de la forme demandée, pas d'explications!!!")
+    elif lang == "en":
+        prompt = ("You are a juridical texts expert and in particular in premises decomposition of juridical situations."
+        +"Decompose the scenario as list of premises, using ; as a separator"
+        +"Exemple: 'A car has crossed a red light', the expected result i:, 'vehicule;cross_red_light': \n " 
+        +"Scenario: \n"+ scenario 
+        +"\n List of the premises already in memory you can re-use:"
+        +premises
+        +"\n Create new premises only on necessary cases."
+        +"\n Add premses only when there is explicit information, no inference. "
+        +"\n Exemple, an ambulance ain't always in an emergency state and doesn't always have flashing lights on! It needs to be WRITTEN in the scenario to be true, generalise this exemple for all premises"
+        +"\n You must ONLY return the list of premises in the required format"
+        +"\n If some premises are negatives, use ~ at the begining of the string. Exemple:"
+        +"\n 'An ambulance with its flashing lights did not cross the park' would be:"
+        +"\n vehicule;flashing_lights;etat_urgence;~cross_park" 
+        +"\n 'and, An ambulance didn't stop at the red light' would be:"
+        +"\n vehicule;cross_red_light" 
+        +"\n Your return will be used in the context of juridical texts. Adapt it to suit."
+        +"\n Be careful, create meaningful categories, a bike could be seen as a vehicule "
+        +"but not in the context of the rule that forbids motorised vehicules from crossing a park "
+        +"\n Be careful!! Do NOT return explications!!!")
+    return prompt
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+def get_complement(S_join,complement,session):
+    lang = session.get("lang", "fr")
+    if lang == "fr":
+        complement = ("Voici la décomposition que tu as proposé à l'étape précédente:"+S_join
+            +"Voici des précisions de l'utilisateur pour l'améliorer:"+complement+"recommence en les prenant en compte")
+    elif lang == "en":
+        complement = ("Here is the decomposition you gave at last step:"+S_join
+            +"Here are precisions from the user to make it better:"+complement+"try again")
+    return complement
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+def reset_session(session,keep_keys=None,reset_rules_updates=False):
+    if reset_rules_updates == True:
+        original_path = session.get("lang", "fr")
+        base = lang
+        new_base_path = f"{base}/RB_updated.txt"
+        shutil.copy("uploads/RB_working.txt", new_base_path)
+    if keep_keys is None:
+        keep_keys = []
+
+    preserved = {k: session.get(k) for k in keep_keys if k in session}
+    session.clear()
+    session.update(preserved)
+
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#

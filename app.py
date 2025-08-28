@@ -1,4 +1,6 @@
 from flask import Flask, request, render_template, session, redirect, url_for
+from flask_babel import Babel
+from flask_babel import lazy_gettext as _
 from mistralai import Mistral
 from logic import *
 from lib_logic2 import *
@@ -11,94 +13,63 @@ import copy
 app = Flask(__name__)
 app.secret_key = "test75591729"
 
+#---------------------------------------------Babel-------------------------------------------------#
+
+app.config['BABEL_DEFAULT_LOCALE'] = 'fr'
+app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
+app.config['BABEL_SUPPORTED_LOCALES'] = ['fr', 'en']
+
+def get_locale():
+    return session.get('lang', 'fr')
+
+babel = Babel(app, locale_selector=get_locale)
+
 #---------------------------------------------Extraction des clés-------------------------------------------------#
 
 with open("cles_API.txt") as inp:
     keys = list(inp.read().split())
 
-#------------------------------------------------------------MISTRAL------------------------------------------------------------#
-API_KEY = keys[0]
-MODEL1 = "mistral-medium"
-client1 = Mistral(api_key=API_KEY)
+#------------------------------------------------------------APIs------------------------------------------------------------#
 
-#------------------------------------------------------------HUGGINGFACE_OLLAMA------------------------------------------------------------#
-MODEL2 = "meta-llama/Llama-3.3-70B-Instruct"
-os.environ["HF_TOKEN"] = keys[1]
-client2 = InferenceClient(provider="hyperbolic",api_key=os.environ["HF_TOKEN"])
+MODELS = ["mistral-medium","meta-llama/Llama-3.3-70B-Instruct"]
+clients = [Mistral(api_key=keys[0]),InferenceClient(provider="hyperbolic",api_key=keys[1])]
 
-def call_llm(prompt):
-    api_order = [session.get("selected_api", "HuggingFace"), "Mistral", "HuggingFace"]
-    tried = set()
+#------------------------------------------------------------Autres vars------------------------------------------------------------#
 
-    for api_name in api_order:
-        if api_name in tried:
-            continue
-        tried.add(api_name)
+API_clients = {"HuggingFace":clients[0],
+               "Mistral":clients[1]}
 
-        try:
-            if api_name == "Mistral":
-                response = client1.chat.complete(
-                    model=MODEL1,
-                    messages=[{"role": "user", "content": prompt}]
-                )
-            else:
-                response = client2.chat.completions.create(
-                    model=MODEL2,
-                    messages=[{"role": "user", "content": prompt}]
-                )
+html_file = "Application.html"
 
-            session["selected_api"] = api_name
-            return response.choices[0].message.content
+#------------------------------------------------------------------------------------------------------------------------#
 
-        except Exception as e:
-            if "capacity" in str(e).lower() or "rate limit" in str(e).lower():
-                continue
-            raise e
+session_cleared = False
 
-    # Si aucune API ne marche :
-    raise RuntimeError("Aucune API disponible actuellement.")
+@app.before_request
+def clear_session_once_per_server():
+    global session_cleared
 
-def init_RB():
-    Bool = session.get("upload_init", False)
-    Rb = Rule_Base()
+    if not session_cleared:
+        session.clear()
+        session_cleared = True
 
-    w_path = session.get("selected_w_path", "W.txt")
-    if not Bool:
-        shutil.copy("RB.txt", "uploads/RB_working.txt")
-        session["selected_rb_path"] = "uploads/RB_working.txt"
-        session["original_rb_path"] = "RB.txt"
-        session["upload_init"]=True
-        session["selected_w_path"] = w_path
+#------------------------------------------------------------------------------------------------------------------------#
 
-    rb_path = "uploads/RB_working.txt"
+@app.route('/set_language/<lang>')
+def set_language(lang):
+    reset_session(session,
+                ["lang",
+                "selected_api",])
+    session['lang'] = lang
+    return redirect(url_for('index'))
 
-    P=[]
-    C=[]
-
-    with open(rb_path, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith("#"):  # Ignore lignes vides ou commentaires
-                continue
-            if ">" in line:
-                gauche, droite = line.split(">", 1)  # Split en deux parties seulement
-                conditions = gauche.strip().split()
-                conclusions = droite.strip().split()
-
-                P.append(conditions)
-                C.append(conclusions)
-            else:
-                print("Ligne ignorée (pas de '>'):", line)
-
-    with open(w_path, "r", encoding="utf-8") as inp:
-        W = list(inp.read().splitlines())
-    
-    Rb.add_W(W)
-    Rb.add_rules(P, C)
-    return Rb
+#------------------------------------------------------------------------------------------------------------------------#
 
 @app.context_processor
 def inject_globals():
+    default_w_path, default_rb_path, W_files, RB_files = get_files(session)
+    DISTANCE_METHODS = get_distance_method()
+    SELECTION_METHODS = get_selection_method()
     context = {
         "selected_api": session.get("selected_api", "HuggingFace"),
         "API": list(API_clients.keys()),
@@ -109,38 +80,13 @@ def inject_globals():
         "sel_map": SELECTION_METHODS,
         "W_files": W_files,
         "RB_files": RB_files,
-        "selected_w": session.get("selected_w", "W test"),
-        "selected_rb": session.get("selected_rb", "RB test"),
+        "selected_w": session.get("selected_w", "W_test"),
+        "selected_rb": session.get("selected_rb", "RB_test"),
     }
-
     context.update({k: session[k] for k in ["scenario", "resultat", "log"] if k in session})
-
     return context
+
 #----------------------------------------------------------------------------------------------#
-
-DISTANCE_METHODS = {"Distance de Hamming": "dist_hamming"}
-
-SELECTION_METHODS = {"Seuil": "select_fct_treshold",
-                     "Minimale":"select_fct_minimal",
-                     "Seuil Minimal":"select_fct_treshold_minimal"}
-
-API_clients = {"HuggingFace":client2,
-               "Mistral":client1}
-
-W_files = {"W test":"W.txt"}
-
-RB_files = {"RB test":"RB.txt"}
-
-html_file = "Application.html"
-
-session_cleared = False
-@app.before_request
-def clear_session_once_per_server():
-    global session_cleared
-
-    if not session_cleared:
-        session.clear()
-        session_cleared = True
 
 
 @app.route("/")
@@ -171,28 +117,36 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 @app.route("/upload_rules", methods=["POST"])
 def upload_rules():
+    default_w_path, default_rb_path, W_files, RB_files = get_files(session)
     session["upload_init"] = True
     w_choice = request.form.get("w_choice")
     rb_choice = request.form.get("rb_choice")
 
+    session["selected_w"] = w_choice
+
     if w_choice == "__upload__" :
         file_w = request.files.get("uploaded_w")
-        if not file_w:                #FIX
+        if not file_w:
             return "Tous les fichiers sont requis", 400
+        
         w_path = os.path.join(app.config["UPLOAD_FOLDER"], secure_filename(file_w.filename))
         file_w.save(w_path)
+
+        session["uploaded_w_filename"] = file_w.filename
         session["selected_w_path"] = w_path
     else :
         if w_choice not in W_files:
             return "Fichiers prédéfinis invalides", 400
         
         w_original_path = W_files[w_choice]
+
+        session["uploaded_w_filename"] = None
         session["selected_w_path"] = w_original_path
 
-
+    session["selected_rb"] = rb_choice
     if rb_choice == "__upload__":
         file_rb = request.files.get("uploaded_rb")
-        if not file_rb:                #FIX
+        if not file_rb:
             return "Tous les fichiers sont requis", 400
         rb_original_path = os.path.join(app.config["UPLOAD_FOLDER"], secure_filename(file_rb.filename))
         file_rb.save(rb_original_path)
@@ -200,15 +154,18 @@ def upload_rules():
         rb_working_path = os.path.join(app.config["UPLOAD_FOLDER"], "RB_working.txt")
         shutil.copy(rb_original_path, rb_working_path)
 
+        session["uploaded_rb_filename"] = file_rb.filename
         session["original_rb_path"] = rb_original_path
         session["selected_rb_path"] = rb_working_path
     else:
         if rb_choice not in RB_files:
             return "Fichiers prédéfinis invalides", 400
         
+        session["uploaded_rb_filename"] = None
         rb_original_path = RB_files[rb_choice]
         rb_working_path = os.path.join(app.config["UPLOAD_FOLDER"], "RB_working.txt")
         shutil.copy(rb_original_path, rb_working_path)
+
         session["original_rb_path"] = rb_original_path
         session["selected_rb_path"] = rb_working_path
 
@@ -224,78 +181,50 @@ def traiter():
     complement = request.form.get("complement") or request.args.get("complement")         #Complément au prompt si l'utilisateur n'est pas satisfait par la décomposition
 
     if scenario1 != "":
-        print("Nouveau scénario")
-        selected_api = session.get("selected_api", "HuggingFace")  # sauvegarde le choix actuel
-        upload_init = session.get("upload_init", False)
-        print("upload_init",upload_init)
-        print("session",session)
-        try:
-            rb_path = session["selected_rb_path"]
-            print("rb_path",rb_path)
-            print("original_rb_path",session["original_rb_path"])
-            shutil.copy(session["original_rb_path"], session["selected_rb_path"])
-            w_path = session["selected_w_path"]
-            print("w_path",w_path)
-        except:
-            None
-        session.clear()
-        print("CLEAR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        session["selected_api"] = selected_api  # restaure le choix après reset
-        session["upload_init"] = upload_init
-        try :
-            session["selected_w_path"] = w_path
-            session["selected_rb_path"] = rb_path
-        except :
-            None
+        default_w_path, default_rb_path, W_files, RB_files = get_files(session)
+        shutil.copy(session.get("original_rb_path", default_rb_path), os.path.join(app.config["UPLOAD_FOLDER"], "RB_working.txt"))              # On ré-initialise le fichier de travail RB_working
+        reset_session(session,
+                      ["lang",
+                       "selected_api",
+                       "upload_init",
+                       "selected_w_path",
+                       "selected_rb_path",
+                       "selected_w",
+                       "uploaded_w_filename",
+                       "selected_rb",
+                       "uploaded_rb_filename",])
         scenario = scenario1
     if scenario == "":              # Cas scénario vide
-        session["resultat"] = "Aucun scénario fourni."
+        session["resultat"] = get_log(1)
         return render_template(html_file)
         
     choice = request.form.get("user_choice", None)              # On récupère le choix de l'utilisateur si il y en a un (choix de quelle règle appliquer)
-    Rb = init_RB()              # Initialisation de la base de règles
+    Rb = init_RB(session)              # Initialisation de la base de règles
 
     if not session.get("decomposition") or (complement != None):                # Si on a la decomposition de S en mémoire ou que la décomposition n'est pas satisfaisante
         premises = ';'.join(Rb.Var_dictionnary._variables.keys())
-        prompt = ("Tu es un expert des textes juridiques et de la décomposition de situations juridiques en prémisses"
-        +"Décompose le scénario sous la forme d'une liste de prémisses, en utilisant le caractère ; comme séparateur dans ton retour."
-        +"Voici un exemple de scénario, 'Une voiture a traversé un feu rouge', le résultat attendu serait, 'véhicule;traverse_feu_rouge': \n " 
-        +"Scénario: \n"+ scenario 
-        +"\n Liste des prémisses déjà en mémoire qui peuvent être réutilisés si le scénario comporte des éléments similaires:"
-        +premises
-        +"\n Ne crée de nouveau prémisse que si c'est nécessaire."
-        +"\n Ne rajoute des prémisses que lorsque tu as de l'information explicite, ne fait pas d'inférence. "
-        +"\n Par exemple une ambulance n'est pas forcément en état d'urgence et n'a PAS FORCEMENT son gyrophare allumé! C'est le cas uniquement si c'est PRECISE, généralise cet exemple à tout les prémisses"
-        +"\n Ton retour ne doit comporter que la liste des prémisses correspondant au scénario dans le format demandé"
-        +"\n Si certains prémisses sont des négations, utilise la caractère ~ au début de la chaîne. Par exemple:"
-        +"\n 'Une ambulance avec son gyrophare n'a pas traversé le parc' donnerait:"
-        +"\n véhicule;gyrophare;etat_urgence;~traverse_parc" 
-        +"\n 'et, Une ambulance ne s'est pas arrêté au feu rouge' donnerait:"
-        +"\n véhicule;traverse_feu_rouge" 
-        +"\n Ton retour sera utilisé dans le contexte de textes juridiques. Adapte tes réponses à ce contexte."
-        +"\n Attention, veille à créer des catégories qui font sens, un vélo peut être vu comme un véhicule "
-        +"mais pas dans le contexte de la règle qui interdit aux véhicules motorisés de traverser un parc "
-        +"\n Attention!! ne renvoie que un string de la forme demandée, pas d'explications!!!")
+        prompt = get_prompt(scenario,premises,session)
 
         if (complement != None):
             S_join = ';'.join(session.get("decomposition"))
-            prompt += ("Voici la décomposition que tu as proposé à l'étape précédente:"+S_join
-            +"Voici des précisions de l'utilisateur pour l'améliorer:"+complement+"recommence en les prenant en compte")
+            prompt += get_complement(S_join,complement,session)
         
-        resultat = call_llm(prompt)
+        resultat = call_llm(prompt,MODELS,clients,session)
     
         S = resultat.split(";")
 
         session["decomposition"] = S
         session["appliquees"] = []
-        log = "Génération d'une extension:"
+        premier_log = True               # Pour le début du log comme la traduction ne marche pas dans app.py
+        log = ""
     else :
         S = session.get("decomposition", [])
         log = request.form.get("log") or request.args.get("log") or ""
+        premier_log = False
 
     deja_appliquees = session.get("appliquees", [])
 
-    if (choice is not None) and (choice != "-1") and (choice != "-2"):                 # Si l'utilisateur a choisi
+    if (choice is not None) and (choice != "-1") and (choice != "-2") and (choice != "-3"):                 # Si l'utilisateur a choisi
         # on ajoute directement la règle puis on passe à la suite
         deja_appliquees = session.get("appliquees", [])
 
@@ -309,12 +238,13 @@ def traiter():
             if temp not in S:
                 S.append(temp)
 
-        log += "\n \n"+f"Application de la règle {choice} : {Rb.rules_original[choice]} "
+        log += "\n\n"
+        log += "\n \n"+f" {get_log(2)} {choice} : {Rb.rules_original[choice]} "
 
         deja_appliquees.append(choice)
         session["appliquees"] = deja_appliquees
 
-    analyse = scenario_check_web4_test(S, Rb,deja_appliquees)                # Règles applicables
+    analyse = scenario_check_web4_test(S, Rb,deja_appliquees,premier_log)                # Règles applicables
     indices = analyse.get("indices",[])              # Indices des règles en question
     options = analyse.get("options",[])
     output = analyse.get("output","")
@@ -332,6 +262,19 @@ def traiter():
     elif choice=="-2":              # recap
         return render_template(html_file,
                                recap = True,
+                               add_RB=True,
+                               regles_appliquees = [Rb.rules[i] for i in deja_appliquees],
+                               situation_finale = [str(s) for s in S],
+                               log=log)
+    elif choice=="-3":              # changement ou non de la base utilisée
+        add_RB = request.form.get("add_RB", False)
+        if add_RB == "True":
+            base = session.get("lang", "fr")
+            new_RB_path = f"{base}/RB/RB_updated.txt"
+            shutil.copy("uploads/RB_working.txt", new_RB_path)
+
+        return render_template(html_file,
+                               recap=True,
                                regles_appliquees = [Rb.rules[i] for i in deja_appliquees],
                                situation_finale = [str(s) for s in S],
                                log=log)
@@ -348,8 +291,12 @@ def traiter():
                                 log=log,
                                 pas_premiere_regle=pas_premier)
 
+#------------------------------------------------------------------------------------------------------------------------#
+
 @app.route("/exceptions", methods=["POST"])
 def exception():
+    DISTANCE_METHODS = get_distance_method()
+    SELECTION_METHODS = get_selection_method()
     dist_choice_label = request.form.get("distances", list(DISTANCE_METHODS.keys())[0]).strip()
     sel_choice_label = request.form.get("selection", list(SELECTION_METHODS.keys())[0])
     distance_method = DISTANCE_METHODS[dist_choice_label]
@@ -368,13 +315,15 @@ def exception():
 
     resultat = request.form.get("resultat", "")
     S = resultat.split(";")
-    Rb = init_RB()
+    Rb = init_RB(session)
     Rb.init_S(S)
+
+    print("arguments",arguments)
 
     choix_ex = choix_exception(distance_method, Rb, arguments,deja_appliquees[-1])
 
     if choix_ex["options"] == []:
-        log +=f"\n \n Aucune des règles de la base n'est suffisamment proche pour proposer une adaptation d'exception"
+        log += choix_ex["output"]
         return render_template(
             html_file,
             Pas_adaptation = True,
@@ -403,6 +352,8 @@ def exception():
         adaptations_string = adaptations_string,
         log=log)
 
+#------------------------------------------------------------------------------------------------------------------------#
+
 @app.route("/proposition", methods=["POST"])
 def proposition():
     scenario = request.form.get('scenario', "").strip()
@@ -415,7 +366,7 @@ def proposition():
     S = resultat.split(";")
 
     if choix == "-1":
-        log +=f"\n \n Aucune des exceptions proposée n'a été validée"
+        log +=f"\n \n {get_log(3)} "
         return redirect(url_for(
                 "traiter",
                 scenario=scenario,
@@ -434,15 +385,15 @@ def proposition():
         with open(session["selected_rb_path"], "a", encoding="utf-8") as f:
             f.write("\n"+ adaptation_string)
 
-        Rb = init_RB()
+        Rb = init_RB(session)
         Rb.init_S(S)
         ancienne_conclu = Rb.rules[deja_appliquees[-1]].conclusion              # suppression de l'ancienne conclu
         nouvelle_decomposition = difference_premisses (session.get("decomposition", []),ancienne_conclu,Rb.W)
         session["decomposition"] = nouvelle_decomposition
 
         # comme on ajoute la nouvelle règle à la fin, son indice correspond au compteur
-        log +=f"\n \n Création d'une exception: {Rb.rules[Rb.compteur-1]} \n à la règle: {Rb.rules[deja_appliquees[-1]]}"
-        log +=f"\n \n Suite à la création réussie d'une exception à la règle: {Rb.rules[deja_appliquees[-1]]} \n on annule son application pour poursuivre la génération d'une extension"
+        log +=f"\n \n {get_log(4)} : {Rb.rules[Rb.compteur-1]} \n {get_log(5)} : {Rb.rules[deja_appliquees[-1]]}"
+        log +=f"\n \n {get_log(6)} : {Rb.rules[deja_appliquees[-1]]} \n {get_log(7)} "
         session["appliquees"] = deja_appliquees[:-1]                # Suppression de la dernière règle appliquée
     #regle_exception = request.form.get("choix_regle_exception", "")
 

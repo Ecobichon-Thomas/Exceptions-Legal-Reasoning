@@ -1,0 +1,10 @@
+cyclist cross_park earphones	>	forbidden
+cyclist cross_park earphones ~passersby	>	authorised
+vehicule cross_red_light	>	forbidden
+vehicule urgence cross_red_light	>	authorised
+vehicule cross_park	>	forbidden
+vehicule authorised	>	fine_0
+vehicule forbidden	>	fine_68
+vehicule cross_red_light less_30	>	fine_0
+vehicule cross_red_light between30_50	>	fine_68
+vehicule cross_red_light more_50	>	fine_135
