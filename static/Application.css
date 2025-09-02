@@ -216,6 +216,13 @@ main{
     max-height: 80vh;
     min-width: 250px;
 }
+.section__log pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 100%;
+  margin: 0;
+}
 
 .section__body--2cols {
     display: flex;

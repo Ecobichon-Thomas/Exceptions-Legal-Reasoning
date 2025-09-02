@@ -1,2 +1,4 @@
 assassinat >> meurtre
-~ ( pas_condamnation & perpétuité ) & ~ ( moins_30 & plus_50 ) & ~ ( entre30_50 & plus_50 )
+sous_emprise_contrainte >> pas_pénalement_responsable
+légitime_défense >> pas_pénalement_responsable
+~ ( pas_condamnation & perpétuité ) & ~ ( 30_ans_prison & pas_condamnation ) & ~ ( 10_ans_prison & pas_condamnation )

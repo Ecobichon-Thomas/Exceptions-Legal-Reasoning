@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-08-27 13:42+0200\n"
+"POT-Creation-Date: 2025-08-29 11:05+0200\n"
 "PO-Revision-Date: 2025-08-21 16:34+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -19,12 +19,12 @@ msgstr ""
 "Generated-By: Babel 2.17.0\n"
 
 #: lib_logic2.py:504
-msgid "Génération d'une extension:"
-msgstr "Extension generation"
+msgid "Génération d'une extension :"
+msgstr "Extension generation:"
 
 #: lib_logic2.py:515
-msgid "Règles applicables"
-msgstr "Applicable rules"
+msgid "Règles applicables :"
+msgstr "Applicable rules: "
 
 #: lib_logic2.py:517 templates/Application.html:248
 #: templates/Application.html:303
@@ -49,52 +49,52 @@ msgid ""
 "adaptation d'exception"
 msgstr "No close enough rule"
 
-#: lib_logic2.py:822
+#: lib_logic2.py:828
 msgid "Distance de Hamming"
 msgstr "Hamming distance"
 
-#: lib_logic2.py:827 templates/Application.html:11
+#: lib_logic2.py:833 templates/Application.html:11
 msgid "Seuil"
 msgstr "Threshold"
 
-#: lib_logic2.py:828
+#: lib_logic2.py:834
 msgid "Minimale"
 msgstr "Minimal"
 
-#: lib_logic2.py:829 templates/Application.html:12
+#: lib_logic2.py:835 templates/Application.html:12
 msgid "Seuil Minimal"
 msgstr "Minimal threshold"
 
-#: lib_logic2.py:835
+#: lib_logic2.py:841
 msgid "Aucun scénario fourni."
 msgstr "No scenario provided."
 
-#: lib_logic2.py:836
+#: lib_logic2.py:842
 msgid "Application de la règle"
 msgstr "Rule application log"
 
-#: lib_logic2.py:837
+#: lib_logic2.py:843
 msgid "Aucune des exceptions proposée n'a été validée"
 msgstr "None of the proposed exceptions were approved."
 
-#: lib_logic2.py:838
+#: lib_logic2.py:844
 msgid "Création d'une exception"
-msgstr "Skip"
+msgstr "Creating an exception"
 
-#: lib_logic2.py:839
+#: lib_logic2.py:845
 msgid "à la règle"
-msgstr "Rule"
+msgstr "to the rule"
 
-#: lib_logic2.py:840
+#: lib_logic2.py:846
 msgid "Suite à la création réussie d'une exception à la règle"
 msgstr "Following the successful creation of an exception to the rule"
 
-#: lib_logic2.py:841
+#: lib_logic2.py:847
 msgid "on annule son application pour poursuivre la génération d'une extension"
 msgstr "we cancel its application to continue generating an extension"
 
 #: templates/Application.html:23
-msgid "Sélection des paramètres:"
+msgid "Sélection des paramètres :"
 msgstr "Parameter selection"
 
 #: templates/Application.html:47 templates/Application.html:96
@@ -102,20 +102,20 @@ msgid "Changer"
 msgstr "Change"
 
 #: templates/Application.html:52
-msgid "Base de savoir:"
-msgstr "Knowledge base:"
+msgid "Base de connaissances :"
+msgstr "Knowledge Base:"
 
 #: templates/Application.html:60 templates/Application.html:83
 msgid "Déposez vos fichiers"
 msgstr "Upload files"
 
 #: templates/Application.html:75
-msgid "Base de Règles:"
+msgid "Base de Règles :"
 msgstr "Rule Base:"
 
 #: templates/Application.html:105
 msgid "Veuillez soumettre un scénario ci-dessous :"
-msgstr "Please submit a scenario below :"
+msgstr "Please submit a scenario below:"
 
 #: templates/Application.html:112
 msgid "Votre scénario"
@@ -133,16 +133,16 @@ msgid ""
 msgstr "If the decomposition is not satisfying add context for the llm"
 
 #: templates/Application.html:138
-msgid "Scénario en mémoire:"
+msgid "Scénario en mémoire :"
 msgstr "Scenario in memory:"
 
 #: templates/Application.html:144
 msgid "Décomposition associée :"
-msgstr "Associated decomposition :"
+msgstr "Associated decomposition:"
 
 #: templates/Application.html:155
 msgid "Traitement :"
-msgstr "Process :"
+msgstr "Process:"
 
 #: templates/Application.html:161
 msgid "Aucune règle ne s'applique au scénario fourni, veuillez ré-essayer"
@@ -150,15 +150,15 @@ msgstr "No rule applies, please try again"
 
 #: templates/Application.html:172
 msgid "Choix de la règle à appliquer :"
-msgstr "Apply a rule :"
+msgstr "Apply a rule:"
 
 #: templates/Application.html:173
-msgid "Sélectionnez une règle parmi celles possibles ci-dessous:"
+msgid "Sélectionnez une règle parmi celles possibles ci-dessous :"
 msgstr "Select a rule:"
 
 #: templates/Application.html:187
-msgid "Ou:"
-msgstr "Or"
+msgid "Ou :"
+msgstr "Or:"
 
 #: templates/Application.html:191
 msgid "Générer une exception à partir de la dernière règle appliquée"
@@ -178,16 +178,16 @@ msgid "Création d'une exception à partir de la dernière règle sélectionnée
 msgstr "Create an exception from the last rule applied"
 
 #: templates/Application.html:209
-msgid "Choix de la distance utilisée pour le choix de l'exception:"
-msgstr "Distance choice"
+msgid "Choix de la distance utilisée pour le choix de l'exception :"
+msgstr "Distance choice:"
 
 #: templates/Application.html:218
-msgid "Choix de la méthode de sélection:"
-msgstr "Selection method choice"
+msgid "Choix de la méthode de sélection :"
+msgstr "Selection method choice:"
 
 #: templates/Application.html:228
-msgid "Choix du seuil associé: "
-msgstr "Threshold choice"
+msgid "Choix du seuil associé : "
+msgstr "Threshold choice:"
 
 #: templates/Application.html:237
 msgid ""
@@ -207,7 +207,7 @@ msgstr "Exception"
 
 #: templates/Application.html:265
 msgid "Adaptation proposée :"
-msgstr "Adaptation"
+msgstr "Adaptation:"
 
 #: templates/Application.html:270
 msgid "Aucune exception connue"
@@ -226,7 +226,7 @@ msgid "Poursuivre"
 msgstr "Continue"
 
 #: templates/Application.html:296
-msgid "Pas de règle choisie: "
+msgid "Pas de règle choisie :"
 msgstr "No selected rule:"
 
 #: templates/Application.html:300
@@ -235,7 +235,7 @@ msgstr "Recap of the extension generation"
 
 #: templates/Application.html:308
 msgid "Situation finale :"
-msgstr "Final situation"
+msgstr "Final situation:"
 
 #: templates/Application.html:313
 msgid ""
@@ -262,18 +262,6 @@ msgid "Non"
 msgstr "No"
 
 #: templates/Application.html:332
-msgid "Log d'application des règles: "
-msgstr "Rule application log"
-
-#~ msgid "fr"
-#~ msgstr "en"
-
-#~ msgid "Génération d'une extension:"
-#~ msgstr "Extension génération"
-
-#~ msgid "Application de la règle"
-#~ msgstr "Rule application log"
-
-#~ msgid "Application de la règle %(num)s : %(rule)s"
-#~ msgstr "Application of rule %(num)s : %(rule)s"
+msgid "Compte rendu du déroulement de la génération de l'extension associée au scénario :"
+msgstr "Progress report on the extension generation associated with the scenario:"
 

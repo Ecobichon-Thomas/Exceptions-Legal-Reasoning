@@ -501,7 +501,7 @@ def scenario_check_web4_test(S, rulebase,deja_appliquees,premier_log):
     regles_possibles = rulebase.inclusion([])
 
     if premier_log:
-        output.append(f" {_('Génération d\'une extension:')} ")
+        output.append(f" {_('Génération d\'une extension :')} ")
 
     temp = regles_possibles.copy()
     for i in regles_possibles:             #Eliminer règles donc la conclusion est incompatible avec la situation (et celles déjà appliquées)
@@ -512,7 +512,7 @@ def scenario_check_web4_test(S, rulebase,deja_appliquees,premier_log):
 
     if len(regles_possibles) >= 1:
         output.append("\n")
-        output.append( f"{_("Règles applicables")} :")
+        output.append( f"{_("Règles applicables :")}")
         for i in regles_possibles:
             output.append(f"- {_('Règle')} {i} : {rulebase.rules_original[i]}")
 
@@ -556,7 +556,7 @@ def choix_exception(distance_method, rulebase, selection_fct_and_args,regle_choi
             "options":options,
             "exceptions associées":[[rulebase.rules_original[i] for i in liste] for liste in exceptions_associees],
             "regles_adaptees":adaptations_associees,
-            " C":output}
+            "output":output}
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
@@ -772,7 +772,7 @@ def str_to_formula(formula_str, Rb):                # à partir d'un string cré
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 def call_llm(prompt,MODELS,clients,session):
-    api_order = [session.get("selected_api", "HuggingFace"), "Mistral", "HuggingFace"]
+    api_order = [session.get("selected_api", "Ollama"), "Mistral", "Ollama"]
     tried = set()
     for api_name in api_order:
         if api_name in tried:
@@ -797,7 +797,7 @@ def call_llm(prompt,MODELS,clients,session):
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
-def get_files(session,add=False,rb_path=None):
+def get_files(session):
     lang = session.get("lang", "fr")
     base_rb = lang+"/RB/"
     base_w = lang+"/W/"
@@ -805,15 +805,21 @@ def get_files(session,add=False,rb_path=None):
     txt_files_rb = [f for f in os.listdir(base_rb) if f.endswith(".txt")]                  # Tout les fichiers .txt d rb
     txt_names_rb = [p[:-4] for p in txt_files_rb]             # On enlève le .txt pour les labels
     paths_rb = [base_rb+p for p in txt_files_rb]
-    default_rb_path = f"{base_rb}RB_test.txt"
+    default_rb = "RB_test"
+    default_rb_path = f"{base_rb}{default_rb}.txt"
 
     txt_files_w = [f for f in os.listdir(base_w) if f.endswith(".txt")]                  # Tout les fichiers .txt d rb
     txt_names_w = [p[:-4] for p in txt_files_w]             # On enlève le .txt pour les labels
     paths_w = [base_w+p for p in txt_files_w]
-    default_w_path = f"{base_w}W_test.txt"
+    default_w = "W_test"
+    default_w_path = f"{base_w}{default_w}.txt"
     
     W_files = dict(zip(txt_names_w, paths_w))
     RB_files = dict(zip(txt_names_rb, paths_rb))
+
+    RB_files = {default_rb: default_rb_path, **{k: v for k, v in RB_files.items() if k != default_rb}}
+    W_files = {default_w: default_w_path, **{k: v for k, v in W_files.items() if k != default_w}}
+
     return default_w_path, default_rb_path, W_files, RB_files
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
@@ -905,7 +911,7 @@ def get_prompt(scenario,premises,session):
     elif lang == "en":
         prompt = ("You are a juridical texts expert and in particular in premises decomposition of juridical situations."
         +"Decompose the scenario as list of premises, using ; as a separator"
-        +"Exemple: 'A car has crossed a red light', the expected result i:, 'vehicule;cross_red_light': \n " 
+        +"Exemple: 'A car has crossed a red light', the expected result i:, 'vehicle;cross_red_light': \n " 
         +"Scenario: \n"+ scenario 
         +"\n List of the premises already in memory you can re-use:"
         +premises
@@ -915,12 +921,14 @@ def get_prompt(scenario,premises,session):
         +"\n You must ONLY return the list of premises in the required format"
         +"\n If some premises are negatives, use ~ at the begining of the string. Exemple:"
         +"\n 'An ambulance with its flashing lights did not cross the park' would be:"
-        +"\n vehicule;flashing_lights;etat_urgence;~cross_park" 
+        +"\n vehicle;flashing_lights;urgence;~cross_park" 
         +"\n 'and, An ambulance didn't stop at the red light' would be:"
-        +"\n vehicule;cross_red_light" 
+        +"\n vehicle;cross_red_light" 
+        +"\n negatives are to be used ONLY when it is precised that something is NOT present, without information, we can't assume the absence or presence of a premise"
+        +"\n be careful, the urgence state is only stated when necessary"
         +"\n Your return will be used in the context of juridical texts. Adapt it to suit."
-        +"\n Be careful, create meaningful categories, a bike could be seen as a vehicule "
-        +"but not in the context of the rule that forbids motorised vehicules from crossing a park "
+        +"\n Be careful, create meaningful categories, a bike could be seen as a vehicle "
+        +"but not in the context of the rule that forbids motorised vehicles from crossing a park "
         +"\n Be careful!! Do NOT return explications!!!")
     return prompt
 
@@ -940,7 +948,7 @@ def get_complement(S_join,complement,session):
 
 def reset_session(session,keep_keys=None,reset_rules_updates=False):
     if reset_rules_updates == True:
-        original_path = session.get("lang", "fr")
+        lang = session.get("lang", "fr")
         base = lang
         new_base_path = f"{base}/RB_updated.txt"
         shutil.copy("uploads/RB_working.txt", new_base_path)

@@ -20,7 +20,7 @@
 
         <div class="section">
             <div class="section__bar">
-                <h2>{{ _("Sélection des paramètres:") }}</h2>
+                <h2>{{ _("Sélection des paramètres :") }}</h2>
                 <button type="button" class="section__toggle">–</button>
             </div>
 
@@ -49,7 +49,7 @@
 
                 <form method="post" action="/upload_rules" enctype="multipart/form-data" class="header-upload-form">
                     <div class="form-group">
-                        <label for="w_choice">{{ _("Base de savoir:") }}</label>
+                        <label for="w_choice">{{ _("Base de connaissances :") }}</label>
                         <select name="w_choice" id="w_choice" onchange="toggleWUpload()">
                             {% for w_name in W_files %}
                                 <option value="{{ w_name }}" {% if session.get('selected_w') == w_name %}selected{% endif %}>
@@ -72,7 +72,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="rb_choice">{{ _("Base de Règles:") }}</label>
+                        <label for="rb_choice">{{ _("Base de Règles :") }}</label>
                         <select name="rb_choice" id="rb_choice" onchange="toggleRBUpload()">
                             {% for rb_name in RB_files %}
                                 <option value="{{ rb_name }}" {% if session.get('selected_rb') == rb_name %}selected{% endif %}>
@@ -135,14 +135,14 @@
             </div>
             <div class="section__body section__body--2cols">
                 <div class="section__col2">  
-                    <h2>{{ _('Scénario en mémoire:') }}</h2>
-                    <pre>{{ scenario }}</pre>
+                    <h2>{{ _('Scénario en mémoire :') }}</h2>
+                    <pre style="white-space: pre-wrap; word-wrap: break-word;">{{ scenario }}</pre>
                 </div>  
                 
                 {% if resultat is defined %}
                     <div class="section__col2"> 
                         <h2>{{ _('Décomposition associée :') }}</h2>
-                        <pre>{{ resultat }}</pre>
+                        <pre style="white-space: pre-wrap; word-wrap: break-word;">{{ resultat }}</pre>
                     </div>
                 {% endif %} 
             </div>
@@ -170,7 +170,7 @@
                     {% if conflit %}
                         <div id="choix_regle">
                             <h2>{{ _('Choix de la règle à appliquer :') }}</h2>
-                            <p>{{ _('Sélectionnez une règle parmi celles possibles ci-dessous:') }}</p>
+                            <p>{{ _('Sélectionnez une règle parmi celles possibles ci-dessous :') }}</p>
 
                             <form method="post" action="/traiter">
                                 <input type="hidden" name="scenario" value="{{ scenario }}">
@@ -184,7 +184,7 @@
                                         <label for="regle_{{ loop.index0 }}">{{ option }}</label>
                                     </div>
                                 {% endfor %}
-                                <p>{{ _("Ou:") }}</p>
+                                <p>{{ _("Ou :") }}</p>
                                 {% if pas_premiere_regle == True %}
                                     <div>
                                         <input type="radio" id="regle_none" name="user_choice" value="-1" required>
@@ -206,7 +206,7 @@
                             <input type="hidden" name="resultat" value="{{ resultat }}">
                             <textarea name="log" style="display:none;">{{ log }}</textarea>
                             <h2>{{ _('Création d\'une exception à partir de la dernière règle sélectionnée') }}</h2>
-                            <h3>{{ _('Choix de la distance utilisée pour le choix de l\'exception:') }}</h3>
+                            <h3>{{ _('Choix de la distance utilisée pour le choix de l\'exception :') }}</h3>
                             {% for option in distances %}
                                 <div>
                                     <input type="radio" id="dist_{{ loop.index0 }}" name="distances" 
@@ -215,7 +215,7 @@
                                 </div>
                             {% endfor %}
 
-                            <h3>{{ _('Choix de la méthode de sélection:') }}</h3>
+                            <h3>{{ _('Choix de la méthode de sélection :') }}</h3>
                             {% for option in selection %}
                                 <div>
                                     <input type="radio" id="sel_{{ loop.index0 }}" name="selection" 
@@ -225,7 +225,7 @@
                             {% endfor %}
 
                             <div id="seuil-container" style="display: none;">
-                                <label for="seuil">{{ _('Choix du seuil associé: ') }}</label>
+                                <label for="seuil">{{ _('Choix du seuil associé : ') }}</label>
                                 <input type="number" id="seuil" name="seuil" min="0" step="1"
                                     value="{{ seuil if seuil is defined else 10 }}">
                             </div>
@@ -293,7 +293,7 @@
                     {% endif %}
 
                     {% if pas_de_choix %}
-                        <h2>{{ _('Pas de règle choisie: ') }}</h2>
+                        <h2>{{ _('Pas de règle choisie :') }}</h2>
                     {% endif %}
 
                     {% if recap %}
@@ -329,7 +329,7 @@
                 </div>
                 <div class="section__log">
                     {% if log %}
-                        <h2>{{ _('Log d\'application des règles: ') }}</h2>
+                        <h2>{{ _('Compte rendu du déroulement de la génération de l\'extension associée au scénario :') }}</h2>
                         <pre>{{ log|safe }}</pre>
                     {% endif %}
                 </div>

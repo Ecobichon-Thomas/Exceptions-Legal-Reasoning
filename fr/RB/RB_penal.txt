@@ -1,6 +1,6 @@
 donner_la_mort volontairement autrui	>	meurtre crime
 meurtre	>	30_ans_prison
-meurtre autre_crime	>	perpétuité
+meurtre crime_non_meurtre	>	perpétuité
 meurtre facilitation_délit	>	perpétuité
 meurtre préméditation	>	assassinat
 meurtre guet-apens	>	assassinat
@@ -13,7 +13,7 @@ meurtre sur_avocat	>	perpétuité
 meurtre sur_officier_public	>	perpétuité
 meurtre sur_militaire	>	perpétuité
 meurtre bande_organisée	>	perpétuité
-attente_a_la_vie administartion_substance pour_entraîner la mort	>	empoisonnement
+attente_a_la_vie administration_substance pour_entraîner_la_mort	>	empoisonnement
 empoisonnement	>	30_ans_prison
 empoisonnement autre_crime	>	perpétuité
 empoisonnement facilitation_délit	>	perpétuité
@@ -28,16 +28,10 @@ empoisonnement sur_officier_public	>	perpétuité
 empoisonnement sur_militaire	>	perpétuité
 empoisonnement bande_organisée	>	perpétuité
 commanditer assassinat pas_tenté	>	10_ans_prison
-empoisonnement parent sur_enfant	>	retrait_authorité_parentale
-tentative empoisonnement parent sur_enfant	>	retrait_authorité_parentale
-meurtre parent sur_enfant	>	retrait_authorité_parentale
-tentative meurtre parent sur_enfant	>	retrait_authorité_parentale
 trouble_psychique moment_des_faits aboli_discernement	>	pas_pénalement_responsable
 trouble_neuropsychique moment_des_faits aboli_discernement	>	pas_pénalement_responsable
 trouble_psychique moment_des_faits aboli_discernement prise_volontaire_drogues	>	~pas_pénalement_responsable
-sous_emprise_contrainte	>	pas_pénalement_responsable
-légitime_défense	>	pas_pénalement_responsable
-défense_contre_auteurs_violences nuit	>	légitime_défense
 meurtre pas_pénalement_responsable	>	pas_condamnation
+défense_contre_auteurs_violences nuit	>	légitime_défense
 
 

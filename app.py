@@ -36,7 +36,7 @@ clients = [Mistral(api_key=keys[0]),InferenceClient(provider="hyperbolic",api_ke
 
 #------------------------------------------------------------Autres vars------------------------------------------------------------#
 
-API_clients = {"HuggingFace":clients[0],
+API_clients = {"Ollama":clients[0],
                "Mistral":clients[1]}
 
 html_file = "Application.html"
@@ -49,7 +49,11 @@ session_cleared = False
 def clear_session_once_per_server():
     global session_cleared
 
-    if not session_cleared:
+    if not session_cleared: 
+        if os.path.isfile("en/RB/RB_updated.txt"):
+            os.remove("en/RB/RB_updated.txt")
+        if os.path.isfile("fr/RB/RB_updated.txt"):
+            os.remove("fr/RB/RB_updated.txt")
         session.clear()
         session_cleared = True
 
@@ -71,7 +75,7 @@ def inject_globals():
     DISTANCE_METHODS = get_distance_method()
     SELECTION_METHODS = get_selection_method()
     context = {
-        "selected_api": session.get("selected_api", "HuggingFace"),
+        "selected_api": session.get("selected_api", "Ollama"),
         "API": list(API_clients.keys()),
         "API_map": API_clients,
         "distances": list(DISTANCE_METHODS.keys()),
@@ -144,7 +148,9 @@ def upload_rules():
         session["selected_w_path"] = w_original_path
 
     session["selected_rb"] = rb_choice
+    session["rb"] = rb_choice
     if rb_choice == "__upload__":
+        session["rb"] = file_rb.filename
         file_rb = request.files.get("uploaded_rb")
         if not file_rb:
             return "Tous les fichiers sont requis", 400
@@ -192,7 +198,8 @@ def traiter():
                        "selected_w",
                        "uploaded_w_filename",
                        "selected_rb",
-                       "uploaded_rb_filename",])
+                       "uploaded_rb_filename",
+                       "rb"])
         scenario = scenario1
     if scenario == "":              # Cas scénario vide
         session["resultat"] = get_log(1)
@@ -254,24 +261,39 @@ def traiter():
 
     if len(indices)==0 and len(deja_appliquees) == 0:              # Si aucune règle n'est applicable est aucune règle n'a été appliquée, message d'erreur
         return render_template(html_file,
-                                No_rule = True)
+                                No_rule = True,
+                                log="No log")
     elif choice=="-1":              # génération d'une exception
             return render_template(html_file,
                                    extension = True,
                                    log=log)
     elif choice=="-2":              # recap
-        return render_template(html_file,
-                               recap = True,
-                               add_RB=True,
-                               regles_appliquees = [Rb.rules[i] for i in deja_appliquees],
-                               situation_finale = [str(s) for s in S],
-                               log=log)
+        new_rules = session.get("new_rules", False)
+        if new_rules == True:
+            return render_template(html_file,
+                                recap = True,
+                                add_RB=True,
+                                regles_appliquees = [Rb.rules[i] for i in deja_appliquees],
+                                situation_finale = [str(s) for s in S],
+                                log=log)
+        else:
+            return render_template(html_file,
+                    recap = True,
+                    regles_appliquees = [Rb.rules[i] for i in deja_appliquees],
+                    situation_finale = [str(s) for s in S],
+                    log=log)
     elif choice=="-3":              # changement ou non de la base utilisée
         add_RB = request.form.get("add_RB", False)
         if add_RB == "True":
-            base = session.get("lang", "fr")
-            new_RB_path = f"{base}/RB/RB_updated.txt"
-            shutil.copy("uploads/RB_working.txt", new_RB_path)
+            i = 0
+            while i<10:
+                file_name = session.get("rb", "RB_test")
+                base = session.get("lang", "fr")
+                new_RB_path = f"{base}/RB/{file_name}_updated{str(i)}.txt"
+                if not os.path.exists(new_RB_path):
+                     shutil.copy("uploads/RB_working.txt", new_RB_path)
+                     break
+                i+=1
 
         return render_template(html_file,
                                recap=True,
@@ -318,8 +340,6 @@ def exception():
     Rb = init_RB(session)
     Rb.init_S(S)
 
-    print("arguments",arguments)
-
     choix_ex = choix_exception(distance_method, Rb, arguments,deja_appliquees[-1])
 
     if choix_ex["options"] == []:
@@ -328,6 +348,7 @@ def exception():
             html_file,
             Pas_adaptation = True,
             log = log)
+
     
     adaptations_string = copy.deepcopy(choix_ex["regles_adaptees"])
     adaptations_list = copy.deepcopy(choix_ex["regles_adaptees"])
@@ -374,6 +395,7 @@ def proposition():
                 resultat=resultat
             ))
     else:
+        session["new_rules"] = True
         i_str, j_str = choix.split("|")
         i = int(i_str)
         j = int(j_str)
