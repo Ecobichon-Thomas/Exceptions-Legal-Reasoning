@@ -1,4 +1,3 @@
-#import pandas as pd
 import numpy as np
 from logic import *
 from scipy.spatial import distance
@@ -536,11 +535,6 @@ def scenario_check_web4_test(S, rulebase,deja_appliquees,premier_log):
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
-#def generation_extension ():
-
-
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
-
 def choix_exception(distance_method, rulebase, selection_fct_and_args,regle_choisie):
     selection_fct = selection_fct_and_args[0]
     args = selection_fct_and_args[1:]
@@ -771,8 +765,8 @@ def str_to_formula(formula_str, Rb):                # à partir d'un string cré
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
-def call_llm(prompt,MODELS,clients,session):
-    api_order = [session.get("selected_api", "Ollama"), "Mistral", "Ollama"]
+def call_llm(prompt,MODELS,clients,session,first_api,noms):
+    api_order = [session.get("selected_api", first_api)]+noms
     tried = set()
     for api_name in api_order:
         if api_name in tried:
@@ -921,11 +915,11 @@ def get_prompt(scenario,premises,session):
         +"\n You must ONLY return the list of premises in the required format"
         +"\n If some premises are negatives, use ~ at the begining of the string. Exemple:"
         +"\n 'An ambulance with its flashing lights did not cross the park' would be:"
-        +"\n vehicle;flashing_lights;urgence;~cross_park" 
+        +"\n vehicle;flashing_lights;emergency;~cross_park" 
         +"\n 'and, An ambulance didn't stop at the red light' would be:"
         +"\n vehicle;cross_red_light" 
         +"\n negatives are to be used ONLY when it is precised that something is NOT present, without information, we can't assume the absence or presence of a premise"
-        +"\n be careful, the urgence state is only stated when necessary"
+        +"\n be careful, the emergency state is only stated when necessary"
         +"\n Your return will be used in the context of juridical texts. Adapt it to suit."
         +"\n Be careful, create meaningful categories, a bike could be seen as a vehicle "
         +"but not in the context of the rule that forbids motorised vehicles from crossing a park "

@@ -2,7 +2,7 @@
     display: flex;
     align-items: center;
     gap: 20px;
-    flex-wrap: wrap; /* permet de passer à la ligne si l'écran est petit */
+    flex-wrap: wrap; 
 }
 
 .form-group {
@@ -41,7 +41,6 @@ input[type="submit"]:hover {
     background-color: #2980b9;
 }
 
-/* ===== Main content ===== */
 main {
     padding: 1em;
     width: 100%;
@@ -53,7 +52,6 @@ main {
     box-sizing: border-box;
 }
 
-/* ===== Radio buttons ===== */
 input[type="radio"] {
     margin-right: 0.4em;
 }
@@ -68,12 +66,10 @@ form div {
     border-radius: 6px;
 }
 
-/* ===== Special text ===== */
 em {
     color: #777;
 }
 
-/* ===== Small devices ===== */
 @media (max-width: 700px) {
     main {
         padding: 1em;
@@ -83,10 +79,6 @@ em {
     }
 }
 
-
-/* =========================
-   Palette & bases du thème
-   ========================= */
 :root{
   --blue: #59b7ff;
   --blue-hover: #4aa7ec;
@@ -104,16 +96,13 @@ body{
   color: var(--text);
 }
 
-/* =========================
-   Header (on garde ta logique)
-   ========================= */
 header{
   background: linear-gradient(180deg, #46a8fb 0%, #3aa0f9 100%);
   color: var(--white);
   padding: 24px;
   display:flex;
-  justify-content:center; /* titre centré dans la barre bleue */
-  position: relative;     /* permet de positionner les formulaires à droite si besoin */
+  justify-content:center;
+  position: relative;
 }
 
 header h1{
@@ -127,7 +116,6 @@ header h1{
   box-shadow: 0 8px 20px rgba(0,0,0,.06);
 }
 
-/* Si tu gardes des formulaires en haut à droite dans le header */
 .header-forms{
   position:absolute;
   right: 24px;
@@ -136,10 +124,6 @@ header h1{
   gap: 14px;
   align-items:center;
 }
-
-/* =========================
-   Conteneur principal
-   ========================= */
 
 main{
   display: block;
@@ -152,9 +136,6 @@ main{
   box-sizing: border-box;
 }
 
-/* =========================
-   Panneaux rétractables
-   ========================= */
 .section{
   margin: 18px 0;
   border-radius: 12px;
@@ -194,16 +175,14 @@ main{
 .section__body--with-log {
     display: flex;
     gap: 1em;
-    align-items: flex-start; /* évite le chevauchement vertical */
+    align-items: flex-start;
 }
 
-/* colonne principale */
 .section__main {
     flex: 1;
-    min-width: 0; /* évite que ça déborde */
+    min-width: 0;
 }
 
-/* colonne log */
 .section__log {
     flex: 1;
     background: #f8f9fa;
@@ -227,7 +206,7 @@ main{
 .section__body--2cols {
     display: flex;
     gap: 2em;
-    align-items: flex-start; /* évite le chevauchement vertical */
+    align-items: flex-start;
 }
 
 .section__col1,
@@ -245,7 +224,6 @@ main{
   box-sizing: border-box;
 }
 
-/* responsive: pile sur petit écran */
 @media (max-width: 800px) {
     .section__body--2cols {
         flex-direction: column;
@@ -270,7 +248,7 @@ main{
 }
 
 .exception-block {
-    background: #64b5f6; /* bleu clair */
+    background: #64b5f6;
     color: white;
     margin: 0.5em 0;
     padding: 0.8em;
@@ -311,10 +289,6 @@ main{
     background: #0d47a1;
 }
 
-
-/* =========================
-   Lignes de paramètres (API / RB / W)
-   ========================= */
 .param-row{
   display:flex;
   align-items:center;
@@ -323,14 +297,13 @@ main{
 }
 
 .param-row label{
-  display:inline-block;        /* override de ton label global */
-  width: 180px;                /* aligne joliment les trois libellés */
+  display:inline-block;
+  width: 180px;
   margin: 0;
   font-weight: 700;
   color: #1e3552;
 }
 
-/* Champs “pilule” */
 .pill-input{
   background: #eaf4ff;
   border: none;
@@ -341,7 +314,6 @@ main{
   outline: none;
 }
 
-/* Boutons "change" / "send" */
 .btn{
   background: var(--blue);
   color: var(--white);
@@ -353,10 +325,6 @@ main{
   transition: background .15s ease;
 }
 .btn:hover{ background: var(--blue-hover); }
-
-/* =========================
-   Inputs & textarea façon mockup
-   ========================= */
 
 textarea {
   min-height: 70px !important;
@@ -383,9 +351,6 @@ textarea {
 .text-pills .send-wrap textarea{ flex:1; }
 .text-pills .send-wrap .btn{ align-self: center; }
 
-/* =========================
-   Zone 2 colonnes (gauche dynamique / droite logs)
-   ========================= */
 .split{
   display:grid;
   grid-template-columns: 1fr 1fr;
@@ -395,7 +360,6 @@ textarea {
   .split{ grid-template-columns: 1fr; }
 }
 
-/* Cartes grises pour “Scenario in memory”, “Associated decomposition” */
 .info-pill{
   background: #eaf4ff;
   border-radius: 12px;
@@ -405,9 +369,6 @@ textarea {
   font-weight: 600;
 }
 
-/* =========================
-   Liste de règles (boutons numérotés)
-   ========================= */
 .rule-list{ display:flex; flex-direction:column; gap: 10px; }
 
 .rule-option{
@@ -426,7 +387,6 @@ textarea {
   font-weight: 800;
 }
 
-/* Rendre les radio + label cliquables façon bouton */
 .rule-option input[type="radio"]{ display:none; }
 .rule-option label{
   margin:0;
@@ -437,9 +397,6 @@ textarea {
   background: var(--blue-hover);
 }
 
-/* =========================
-   Champs d’upload discrets & nom de fichier
-   ========================= */
 .upload-field{
   display:flex; align-items:center; gap: 8px;
 }
@@ -452,12 +409,9 @@ textarea {
   font-style: italic;
 }
 
-/* =========================
-   Petits raffinements
-   ========================= */
 fieldset,
 form{
-  background: transparent; /* on laisse la section gérer le fond */
+  background: transparent;
   border: none;
   margin: 0; padding: 0;
 }

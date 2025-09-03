@@ -1,3 +1,2 @@
 forbidden <=> ~ authorised
 ~ ( less_30 & between30_50 ) & ~ ( less_30 & more_50 ) & ~ ( between30_50 & more_50 )
-~ ( fine_0 & fine_68 ) & ~ ( fine_135 & fine_68 ) & ~ ( fine_135 & fine_0 )

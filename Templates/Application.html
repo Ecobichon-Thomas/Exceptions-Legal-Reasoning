@@ -96,6 +96,9 @@
                     <input type="submit" value="{{ _('Changer') }}">
                 </form>
 
+                <button onclick="window.open('{{ url_for('static', filename='pdf/user_guide.pdf') }}', '_blank')">
+                    User Guide
+                </button>
 
             </div>
         </div>  
@@ -236,7 +239,7 @@
                     {% if no_exception %}
                         <h3>{{ _('Aucune règle suffisament proche n\'a été détectée, pas de création d\'exception proposée') }}</h3>
                     {% elif indices_rules is defined %}
-                        <h3>{{ _('Voici les règles à partir desquelles nous proposons de créer une exception :') }}</h3>
+                        <h2>{{ _('Voici les règles à partir desquelles nous proposons de créer une exception :') }}</h2>
 
                         <form method="post" action="/proposition">
                             <input type="hidden" name="scenario" value="{{ scenario }}">
@@ -282,7 +285,7 @@
                     {% endif %}
 
                     {% if Pas_adaptation %}
-                        <h3>{{ _('Aucune règle n\'est suffisament proche pour proposer une adaptation ') }}</h3>
+                        <h2>{{ _('Aucune règle n\'est suffisament proche pour proposer une adaptation ') }}</h2>
                         
                         <form method="post" action="/traiter">
                             <input type="hidden" name="scenario" value="{{ scenario }}">

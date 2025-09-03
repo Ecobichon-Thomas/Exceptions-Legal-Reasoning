@@ -3,8 +3,5 @@ cycliste traverse_parc écouteurs ~passants	>	autorisé
 véhicule traverse_feu_rouge	>	interdit
 véhicule etat_urgence traverse_feu_rouge	>	autorisé
 véhicule traverse_parc	>	interdit
-véhicule autorisé	>	amende_0
-véhicule interdit	>	amende_68
-véhicule traverse_feu_rouge moins_30	>	amende_0
-véhicule traverse_feu_rouge entre30_50	>	amende_68
-véhicule traverse_feu_rouge plus_50	>	amende_135
+véhicule autorisé	>	~amende
+véhicule interdit	>	amende

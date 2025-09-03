@@ -29,15 +29,55 @@ babel = Babel(app, locale_selector=get_locale)
 with open("cles_API.txt") as inp:
     keys = list(inp.read().split())
 
+keys = []
+noms = []
+
+with open("cles_API.txt", "r", encoding="utf-8") as f:
+    for line in f:
+        line = line.strip()
+        if not line or line.startswith("#"):  # Ignore lignes vides ou commentaires
+            continue
+        if ":" in line:
+            gauche, droite = line.split(":", 1)
+            nom = gauche.strip().split()
+            key = droite.strip().split()
+
+            keys.append(key[0])
+            noms.append(nom[0])
+        else:
+            print("Ligne ignorée (pas de ':'):", line)
+
+print("keys",keys)
+print("noms",noms)
+
 #------------------------------------------------------------APIs------------------------------------------------------------#
 
-MODELS = ["mistral-medium","meta-llama/Llama-3.3-70B-Instruct"]
-clients = [Mistral(api_key=keys[0]),InferenceClient(provider="hyperbolic",api_key=keys[1])]
+list_API = ["Mistral","Ollama"]
+API_clients = {}
+clients =[]
+MODELS = []
+first_api = ""
+for i,nom in enumerate(noms):
+    print("nom",nom)
+    print("i",i)
+    if nom == 'Mistral':
+        if first_api != "Ollama":
+            first_api = "Mistral"
+        API_clients.update({"Mistral" : Mistral(api_key=keys[i])})
+        MODELS.append("mistral-medium")
+        clients.append(Mistral(api_key=keys[i]))
+    elif nom == 'Ollama':
+        first_api = "Ollama"
+        API_clients.update({"Ollama" : InferenceClient(provider="hyperbolic",api_key=keys[i])})
+        MODELS.append("meta-llama/Llama-3.3-70B-Instruct")
+        clients.append(InferenceClient(provider="hyperbolic",api_key=keys[i]))
+
+print("API_clients",API_clients)
+print("clients",clients)
+print("MODELS",MODELS)
+print("first_api",first_api)
 
 #------------------------------------------------------------Autres vars------------------------------------------------------------#
-
-API_clients = {"Ollama":clients[0],
-               "Mistral":clients[1]}
 
 html_file = "Application.html"
 
@@ -75,7 +115,7 @@ def inject_globals():
     DISTANCE_METHODS = get_distance_method()
     SELECTION_METHODS = get_selection_method()
     context = {
-        "selected_api": session.get("selected_api", "Ollama"),
+        "selected_api": session.get("selected_api", first_api),
         "API": list(API_clients.keys()),
         "API_map": API_clients,
         "distances": list(DISTANCE_METHODS.keys()),
@@ -216,7 +256,7 @@ def traiter():
             S_join = ';'.join(session.get("decomposition"))
             prompt += get_complement(S_join,complement,session)
         
-        resultat = call_llm(prompt,MODELS,clients,session)
+        resultat = call_llm(prompt,MODELS,clients,session,first_api,noms)
     
         S = resultat.split(";")
 
@@ -236,7 +276,7 @@ def traiter():
         deja_appliquees = session.get("appliquees", [])
 
         choice = int(choice)
-        ccl = Rb.rules[choice].conclusion              # robuste pour passage aux listes de conclusions
+        ccl = Rb.rules[choice].conclusion
         for c in ccl:                   # On traduit en string les négations pour pouvoir les entrer dans S
             if isinstance(c,Not):
                 temp = "~"+c.children[0].name
@@ -246,7 +286,7 @@ def traiter():
                 S.append(temp)
 
         log += "\n\n"
-        log += "\n \n"+f" {get_log(2)} {choice} : {Rb.rules_original[choice]} "
+        log += f" {get_log(2)} {choice} : {Rb.rules_original[choice]} "
 
         deja_appliquees.append(choice)
         session["appliquees"] = deja_appliquees
