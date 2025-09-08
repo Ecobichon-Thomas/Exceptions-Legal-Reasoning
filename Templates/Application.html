@@ -24,81 +24,101 @@
                 <button type="button" class="section__toggle">–</button>
             </div>
 
-            <div class="section__body">
-                <form action="{{ url_for('set_language', lang='fr') }}" method="get" id="langForm">
-                <select name="lang" onchange="
-                        if (confirm('⚠️ La base de règle va être ré-initialisée pour correspondre à la langue. Continuer ?')) {
-                        document.getElementById('langForm').action = '/set_language/' + this.value;
-                        this.form.submit();
-                        } else {this.value = '{{ session.get('lang', 'fr') }}';}">
-                    <option value="fr" {% if session.get('lang', 'fr') == 'fr' %}selected{% endif %}>🇫🇷 Français</option>
-                    <option value="en" {% if session.get('lang', 'fr') == 'en' %}selected{% endif %}>🇬🇧 English</option>
-                </select>
-                </form>
-                <form method="post" action="/set_config">
-                    <label for="api">API :</label>
-                    <select name="api" id="api">
-                        {% for api_name in API %}
-                            <option value="{{ api_name }}" {% if api_name == selected_api %}selected{% endif %}>
-                                {{ api_name }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                    <input type="submit" value="{{ _('Changer') }}">
-                </form>
+            <div class="section__body grid-container">
 
-                <form method="post" action="/upload_rules" enctype="multipart/form-data" class="header-upload-form">
-                    <div class="form-group">
-                        <label for="w_choice">{{ _("Base de connaissances :") }}</label>
-                        <select name="w_choice" id="w_choice" onchange="toggleWUpload()">
-                            {% for w_name in W_files %}
-                                <option value="{{ w_name }}" {% if session.get('selected_w') == w_name %}selected{% endif %}>
-                                    {{ w_name }}
+                <div class="grid-row">
+                    <form action="{{ url_for('set_language', lang='fr') }}" method="get" id="langForm">
+                        <label for="lang"> {{ _('Langage :') }}</label>
+                        <select name="lang" onchange="
+                                if (confirm('⚠️ La base de règle va être ré-initialisée pour correspondre à la langue. Continuer ?')) {
+                                    document.getElementById('langForm').action = '/set_language/' + this.value;
+                                    this.form.submit();
+                                } else {this.value = '{{ session.get('lang', 'fr') }}';}">
+                            <option value="fr" {% if session.get('lang', 'fr') == 'fr' %}selected{% endif %}>🇫🇷 Français</option>
+                            <option value="en" {% if session.get('lang', 'fr') == 'en' %}selected{% endif %}>🇬🇧 English</option>
+                        </select>
+                    </form>
+
+                    <form method="post" action="/set_config">
+                        <label for="api">API :</label>
+                        <select name="api" id="api">
+                            {% for api_name in API %}
+                                <option value="{{ api_name }}" {% if api_name == selected_api %}selected{% endif %}>
+                                    {{ api_name }}
                                 </option>
                             {% endfor %}
-                            <option value="__upload__" {% if session.get('selected_w') == "__upload__" %}selected{% endif %}>
-                                {{ _("Déposez vos fichiers") }}
-                            </option>
                         </select>
-                        <div id="w_upload_fields" class="upload-field" 
-                            style="{% if session.get('selected_w') == '__upload__' %}display:block;{% else %}display:none;{% endif %}">
-                            <input type="file" name="uploaded_w" id="uploaded_w">
-                            <span class="file-name" id="w_file_name">
-                                {% if session.get('uploaded_w_filename') %}
-                                    {{ session.get('uploaded_w_filename') }}
-                                {% endif %}
-                            </span>
-                        </div>
-                    </div>
+                        <input type="submit" value="{{ _('Changer') }}">
+                    </form>
+                </div>
 
-                    <div class="form-group">
-                        <label for="rb_choice">{{ _("Base de Règles :") }}</label>
-                        <select name="rb_choice" id="rb_choice" onchange="toggleRBUpload()">
-                            {% for rb_name in RB_files %}
-                                <option value="{{ rb_name }}" {% if session.get('selected_rb') == rb_name %}selected{% endif %}>
-                                    {{ rb_name }}
+
+                <div class="grid-row">
+                    <!-- Knowledge Base -->
+                    <form method="post" action="/upload_rules" enctype="multipart/form-data" class="header-upload-form">
+                        <div class="form-group">
+                            <label for="w_choice">{{ _("Base de connaissances :") }}</label>
+                            <select name="w_choice" id="w_choice" onchange="toggleWUpload()">
+                                {% for w_name in W_files %}
+                                    <option value="{{ w_name }}" {% if session.get('selected_w') == w_name %}selected{% endif %}>
+                                        {{ w_name }}
+                                    </option>
+                                {% endfor %}
+                                <option value="__upload__" {% if session.get('selected_w') == "__upload__" %}selected{% endif %}>
+                                    {{ _("Déposez vos fichiers") }}
                                 </option>
-                            {% endfor %}
-                            <option value="__upload__" {% if session.get('selected_rb') == "__upload__" %}selected{% endif %}>
-                                {{ _("Déposez vos fichiers") }}
-                            </option>
-                        </select>
-                        <div id="rb_upload_fields" class="upload-field" style="{% if session.get('selected_rb') == '__upload__' %}display:block;{% else %}display:none;{% endif %}">
-                            <input type="file" name="uploaded_rb" id="uploaded_rb">
-                            <span class="file-name" id="rb_file_name">
-                                {% if session.get('uploaded_rb_filename') %}
-                                    {{ session.get('uploaded_rb_filename') }}
-                                {% endif %}
-                            </span>
+                            </select>
+                            <div id="w_upload_fields" class="upload-field" 
+                                style="{% if session.get('selected_w') == '__upload__' %}display:block;{% else %}display:none;{% endif %}">
+                                <input type="file" name="uploaded_w" id="uploaded_w">
+                                <span class="file-name" id="w_file_name">
+                                    {% if session.get('uploaded_w_filename') %}
+                                        {{ session.get('uploaded_w_filename') }}
+                                    {% endif %}
+                                </span>
+                            </div>
                         </div>
-                    </div>
+                    </form>
 
-                    <input type="submit" value="{{ _('Changer') }}">
-                </form>
+                    <!-- Rule Base -->
+                    <form method="post" action="/upload_rules" enctype="multipart/form-data" class="header-upload-form">
+                        <div class="form-group">
+                            <label for="rb_choice">{{ _("Base de Règles :") }}</label>
+                            <select name="rb_choice" id="rb_choice" onchange="toggleRBUpload()">
+                                {% for rb_name in RB_files %}
+                                    <option value="{{ rb_name }}" {% if session.get('selected_rb') == rb_name %}selected{% endif %}>
+                                        {{ rb_name }}
+                                    </option>
+                                {% endfor %}
+                                <option value="__upload__" {% if session.get('selected_rb') == "__upload__" %}selected{% endif %}>
+                                    {{ _("Déposez vos fichiers") }}
+                                </option>
+                            </select>
+                            <div id="rb_upload_fields" class="upload-field" style="{% if session.get('selected_rb') == '__upload__' %}display:block;{% else %}display:none;{% endif %}">
+                                <input type="file" name="uploaded_rb" id="uploaded_rb">
+                                <span class="file-name" id="rb_file_name">
+                                    {% if session.get('uploaded_rb_filename') %}
+                                        {{ session.get('uploaded_rb_filename') }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <input type="submit" value="{{ _('Changer') }}">
+                    </form>
+                </div>
 
-                <button onclick="window.open('{{ url_for('static', filename='pdf/user_guide.pdf') }}', '_blank')">
-                    User Guide
-                </button>
+                
+                
+
+                <div class="grid-row">
+                    <button onclick="window.open('{{ url_for('static', filename='pdf/user_guide.pdf') }}', '_blank')">
+                        User Guide
+                    </button>
+
+                    <button onclick="window.open('https://github.com/Ecobichon-Thomas/Exceptions-Legal-Reasoning.git', '_blank')">
+                        GitHub
+                    </button>
+                </div>
 
             </div>
         </div>  
@@ -138,7 +158,7 @@
             </div>
             <div class="section__body section__body--2cols">
                 <div class="section__col2">  
-                    <h2>{{ _('Scénario en mémoire :') }}</h2>
+                    <h2>{{ _('Scénario :') }}</h2>
                     <pre style="white-space: pre-wrap; word-wrap: break-word;">{{ scenario }}</pre>
                 </div>  
                 
@@ -155,13 +175,32 @@
         {% if log %}
         <div class="section">
             <div class="section__bar">
-                <h2>{{ _('Traitement :') }}</h2>
+                <h2>
+                    {{ _('Traitement :') }} 
+                    {% if conflit %}
+                        {{ _('Choix de la règle à appliquer :') }}
+                    {% endif %}
+
+                    {% if extension %}
+                        {{ _('Création d\'une exception à partir de la dernière règle sélectionnée') }}
+                    {% endif %}
+                    {% if indices_rules is defined %}
+                        {{ _('Voici les règles à partir desquelles nous proposons de créer une exception :') }}
+                    {% endif %}
+                    {% if Pas_adaptation %}
+                        {{ _('Aucune règle n\'est suffisament proche pour proposer une adaptation ') }}
+                    {% endif %}
+                    {% if recap %}
+                        {{ _('Récapitulatif de la génération de l\'extension') }}
+                    {% endif %}
+                    
+                </h2>
                 <button type="button" class="section__toggle">–</button>
             </div>
             <div class="section__body section__body--with-log">
                 <div class="section__main">    
                     {% if No_rule %}
-                        <h2>{{ _('Aucune règle ne s\'applique au scénario fourni, veuillez ré-essayer') }}</h2>
+                        <h3>{{ _('Aucune règle ne s\'applique au scénario fourni, veuillez ré-essayer') }}</h3>
                     {% endif %}
                     {% if loop %}
                         <form id="auto-submit-form" method="post" action="/traiter">
@@ -172,9 +211,12 @@
                     {% endif %}
                     {% if conflit %}
                         <div id="choix_regle">
-                            <h2>{{ _('Choix de la règle à appliquer :') }}</h2>
-                            <p>{{ _('Sélectionnez une règle parmi celles possibles ci-dessous :') }}</p>
-
+                            {% if no_choice == False %}
+                                <h3>{{ _('Sélectionnez une règle parmi celles possibles ci-dessous :') }}</h3>
+                            {% endif %}
+                            {% if no_choice == True %}
+                                <h3>{{ _('Sélectionnez une option :') }}</h3>
+                            {% endif %}
                             <form method="post" action="/traiter">
                                 <input type="hidden" name="scenario" value="{{ scenario }}">
                                 <input type="hidden" name="resultat" value="{{ resultat }}">
@@ -187,7 +229,9 @@
                                         <label for="regle_{{ loop.index0 }}">{{ option }}</label>
                                     </div>
                                 {% endfor %}
-                                <p>{{ _("Ou :") }}</p>
+                                {% if no_choice == False %}
+                                    <p>{{ _("Ou :") }}</p>
+                                {% endif %}
                                 {% if pas_premiere_regle == True %}
                                     <div>
                                         <input type="radio" id="regle_none" name="user_choice" value="-1" required>
@@ -208,7 +252,6 @@
                             <input type="hidden" name="scenario" value="{{ scenario }}">
                             <input type="hidden" name="resultat" value="{{ resultat }}">
                             <textarea name="log" style="display:none;">{{ log }}</textarea>
-                            <h2>{{ _('Création d\'une exception à partir de la dernière règle sélectionnée') }}</h2>
                             <h3>{{ _('Choix de la distance utilisée pour le choix de l\'exception :') }}</h3>
                             {% for option in distances %}
                                 <div>
@@ -239,8 +282,7 @@
                     {% if no_exception %}
                         <h3>{{ _('Aucune règle suffisament proche n\'a été détectée, pas de création d\'exception proposée') }}</h3>
                     {% elif indices_rules is defined %}
-                        <h2>{{ _('Voici les règles à partir desquelles nous proposons de créer une exception :') }}</h2>
-
+                        <h3>{{ _('Choix de l\'adaptation :') }}</h3>
                         <form method="post" action="/proposition">
                             <input type="hidden" name="scenario" value="{{ scenario }}">
                             <input type="hidden" name="resultat" value="{{ resultat }}">
@@ -285,7 +327,6 @@
                     {% endif %}
 
                     {% if Pas_adaptation %}
-                        <h2>{{ _('Aucune règle n\'est suffisament proche pour proposer une adaptation ') }}</h2>
                         
                         <form method="post" action="/traiter">
                             <input type="hidden" name="scenario" value="{{ scenario }}">
@@ -300,7 +341,6 @@
                     {% endif %}
 
                     {% if recap %}
-                        <h2>{{ _('Récapitulatif de la génération de l\'extension') }}</h2>
                         {% for i in range(regles_appliquees | length) %}
                             <div class="rule-block">
                                 <p class="rule-title">{{ _('Règle') }} {{ i + 1 }} :</p>
@@ -313,7 +353,9 @@
                         </div>
                     {% endif %}
                     {% if add_RB %}
-                        <h2>{{ _('Voulez-vous créer une nouvelle base de règle comprenant les règles qui ont été créées?') }}</h2>
+                        <h3>
+                            {{ _('Voulez-vous créer une nouvelle base de règle comprenant les règles qui ont été créées?') }}
+                        </h3>
                         <p>{{ _('Vous pourrez retrouver le base de règles créée dans la liste déroulante en haut, sélectionnez la si vous voulez soumettre un autre scénario en tenant compte de ces nouvelles règles') }}</p>
                         <form method="post" action="/traiter">
                             <input type="hidden" name="scenario" value="{{ scenario }}">

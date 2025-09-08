@@ -10,21 +10,27 @@ from werkzeug.utils import secure_filename
 import shutil
 import copy
 
+# --------------------------------------------------
+# Flask app initialization
+# --------------------------------------------------
+
 app = Flask(__name__)
-app.secret_key = "test75591729"
+app.secret_key = "test75591729"              # Secret key is needed for session handling (cookies, etc.)
 
 #---------------------------------------------Babel-------------------------------------------------#
 
-app.config['BABEL_DEFAULT_LOCALE'] = 'fr'
+# Multi-languages, more explanatory details in comment in babel.cfg file
+
+app.config['BABEL_DEFAULT_LOCALE'] = 'fr'                   # Default language = French
 app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations'
 app.config['BABEL_SUPPORTED_LOCALES'] = ['fr', 'en']
 
-def get_locale():
+def get_locale():                    # Retrieve the language from the session (default = French)
     return session.get('lang', 'fr')
 
 babel = Babel(app, locale_selector=get_locale)
 
-#---------------------------------------------Extraction des clés-------------------------------------------------#
+#---------------------------------------------API keys extraction-------------------------------------------------#
 
 with open("cles_API.txt") as inp:
     keys = list(inp.read().split())
@@ -35,7 +41,7 @@ noms = []
 with open("cles_API.txt", "r", encoding="utf-8") as f:
     for line in f:
         line = line.strip()
-        if not line or line.startswith("#"):  # Ignore lignes vides ou commentaires
+        if not line or line.startswith("#"):  # Ignore empty lines or comments
             continue
         if ":" in line:
             gauche, droite = line.split(":", 1)
@@ -47,10 +53,7 @@ with open("cles_API.txt", "r", encoding="utf-8") as f:
         else:
             print("Ligne ignorée (pas de ':'):", line)
 
-print("keys",keys)
-print("noms",noms)
-
-#------------------------------------------------------------APIs------------------------------------------------------------#
+#------------------------------------------------------------API ilient init------------------------------------------------------------#
 
 list_API = ["Mistral","Ollama"]
 API_clients = {}
@@ -58,8 +61,6 @@ clients =[]
 MODELS = []
 first_api = ""
 for i,nom in enumerate(noms):
-    print("nom",nom)
-    print("i",i)
     if nom == 'Mistral':
         if first_api != "Ollama":
             first_api = "Mistral"
@@ -72,12 +73,7 @@ for i,nom in enumerate(noms):
         MODELS.append("meta-llama/Llama-3.3-70B-Instruct")
         clients.append(InferenceClient(provider="hyperbolic",api_key=keys[i]))
 
-print("API_clients",API_clients)
-print("clients",clients)
-print("MODELS",MODELS)
-print("first_api",first_api)
-
-#------------------------------------------------------------Autres vars------------------------------------------------------------#
+#------------------------------------------------------------Other vars------------------------------------------------------------#
 
 html_file = "Application.html"
 
@@ -87,6 +83,11 @@ session_cleared = False
 
 @app.before_request
 def clear_session_once_per_server():
+    """
+    This runs before each request.
+    Used here to clear the session and reset RB_updated.txt once,
+    the first time the server handles a request.
+    """
     global session_cleared
 
     if not session_cleared: 
@@ -101,6 +102,11 @@ def clear_session_once_per_server():
 
 @app.route('/set_language/<lang>')
 def set_language(lang):
+    """
+    Change the interface language.
+    Flask route with a dynamic parameter <lang>.
+    Example: /set_language/en or /set_language/fr
+    """
     reset_session(session,
                 ["lang",
                 "selected_api",])
@@ -111,10 +117,14 @@ def set_language(lang):
 
 @app.context_processor
 def inject_globals():
+    """
+    Add variables to the template context globally,
+    so they can be accessed directly in HTML templates (Jinja2).
+    """
     default_w_path, default_rb_path, W_files, RB_files = get_files(session)
     DISTANCE_METHODS = get_distance_method()
     SELECTION_METHODS = get_selection_method()
-    context = {
+    context = {             # always defined
         "selected_api": session.get("selected_api", first_api),
         "API": list(API_clients.keys()),
         "API_map": API_clients,
@@ -127,7 +137,7 @@ def inject_globals():
         "selected_w": session.get("selected_w", "W_test"),
         "selected_rb": session.get("selected_rb", "RB_test"),
     }
-    context.update({k: session[k] for k in ["scenario", "resultat", "log"] if k in session})
+    context.update({k: session[k] for k in ["scenario", "resultat", "log"] if k in session})            # if defined
     return context
 
 #----------------------------------------------------------------------------------------------#
@@ -135,6 +145,10 @@ def inject_globals():
 
 @app.route("/")
 def index():
+    """
+    Root URL of the web app (homepage).
+    Renders Application.html.
+    """
     return render_template(html_file)
 
 # @app.route("/start")
@@ -145,22 +159,36 @@ def index():
 
 @app.route("/reset")
 def reset():
+    """
+    Reset the session and redirect to homepage.
+    """
     session.clear()
     return redirect("/")
 
 #----------------------------------------------------------------------------------------------#
 
-@app.route("/set_config", methods=["POST"])             # Utilisé quand on donne des fichiers locaux
+@app.route("/set_config", methods=["POST"])
 def set_config():
+    """
+    Route used when user selects configuration (e.g., choosing API).
+    Accepts POST only.
+    """
     session["selected_api"] = request.form.get("api")
     return redirect(request.referrer or url_for("index"))
 
-UPLOAD_FOLDER = "uploads"
+
+UPLOAD_FOLDER = "uploads"               # creating a folder for Uploads
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
+
 @app.route("/upload_rules", methods=["POST"])
 def upload_rules():
+    """
+    Route for uploading custom W or RB rule files.
+    Accepts POST only.
+    Handles both uploaded files and predefined files.
+    """
     default_w_path, default_rb_path, W_files, RB_files = get_files(session)
     session["upload_init"] = True
     w_choice = request.form.get("w_choice")
@@ -221,14 +249,20 @@ def upload_rules():
 
 @app.route("/traiter", methods=["GET","POST"])
 def traiter():
-    scenario = (request.form.get('scenario') or request.args.get('scenario') or "").strip()             # Scenario dans le système, déjà décomposé
-    resultat = request.form.get("resultat") or request.args.get("resultat") or ""             # Décomposition de ce scénario
-    scenario1 = (request.form.get("scenario1") or request.args.get("scenario1") or "").strip()           # Nouveau scénario si l'utilisateur en a fourni un
-    complement = request.form.get("complement") or request.args.get("complement")         #Complément au prompt si l'utilisateur n'est pas satisfait par la décomposition
+    """
+    Core processing route.
+    Handles scenario decomposition, applies rules,
+    manages user choices (apply rule, recap, exceptions, etc.).
+    Accepts GET and POST.
+    """
+    scenario = (request.form.get('scenario') or request.args.get('scenario') or "").strip()             # Scenario in the system, already broken down
+    resultat = request.form.get("resultat") or request.args.get("resultat") or ""             # Breakdown of this scenario
+    scenario1 = (request.form.get("scenario1") or request.args.get("scenario1") or "").strip()           # New scenario if the user has provided one
+    complement = request.form.get("complement") or request.args.get("complement")         # Supplement to the prompt if the user is not satisfied with the breakdown
 
     if scenario1 != "":
         default_w_path, default_rb_path, W_files, RB_files = get_files(session)
-        shutil.copy(session.get("original_rb_path", default_rb_path), os.path.join(app.config["UPLOAD_FOLDER"], "RB_working.txt"))              # On ré-initialise le fichier de travail RB_working
+        shutil.copy(session.get("original_rb_path", default_rb_path), os.path.join(app.config["UPLOAD_FOLDER"], "RB_working.txt"))              # We reset the RB_working work file
         reset_session(session,
                       ["lang",
                        "selected_api",
@@ -239,16 +273,16 @@ def traiter():
                        "uploaded_w_filename",
                        "selected_rb",
                        "uploaded_rb_filename",
-                       "rb"])
+                       "rb"])               # reset session
         scenario = scenario1
-    if scenario == "":              # Cas scénario vide
+    if scenario == "":              # Empty scenario case
         session["resultat"] = get_log(1)
         return render_template(html_file)
         
-    choice = request.form.get("user_choice", None)              # On récupère le choix de l'utilisateur si il y en a un (choix de quelle règle appliquer)
-    Rb = init_RB(session)              # Initialisation de la base de règles
+    choice = request.form.get("user_choice", None)              # We retrieve the user's choice if there is one (choice of which rule to apply)
+    Rb = init_RB(session)              # Initialization of the rule base
 
-    if not session.get("decomposition") or (complement != None):                # Si on a la decomposition de S en mémoire ou que la décomposition n'est pas satisfaisante
+    if not session.get("decomposition") or (complement != None):                # If we have the decomposition of S in memory or if the decomposition is not satisfactory
         premises = ';'.join(Rb.Var_dictionnary._variables.keys())
         prompt = get_prompt(scenario,premises,session)
 
@@ -262,7 +296,7 @@ def traiter():
 
         session["decomposition"] = S
         session["appliquees"] = []
-        premier_log = True               # Pour le début du log comme la traduction ne marche pas dans app.py
+        premier_log = True               # For the beginning of the log, as the translation does not work in app.py
         log = ""
     else :
         S = session.get("decomposition", [])
@@ -271,13 +305,13 @@ def traiter():
 
     deja_appliquees = session.get("appliquees", [])
 
-    if (choice is not None) and (choice != "-1") and (choice != "-2") and (choice != "-3"):                 # Si l'utilisateur a choisi
-        # on ajoute directement la règle puis on passe à la suite
+    if (choice is not None) and (choice != "-1") and (choice != "-2") and (choice != "-3"):                 # If the user has chosen
+        # Add the rule directly, then move on to the next step
         deja_appliquees = session.get("appliquees", [])
 
         choice = int(choice)
         ccl = Rb.rules[choice].conclusion
-        for c in ccl:                   # On traduit en string les négations pour pouvoir les entrer dans S
+        for c in ccl:                   # Negations are translated into strings so that they can be entered into S
             if isinstance(c,Not):
                 temp = "~"+c.children[0].name
             else:
@@ -291,19 +325,19 @@ def traiter():
         deja_appliquees.append(choice)
         session["appliquees"] = deja_appliquees
 
-    analyse = scenario_check_web4_test(S, Rb,deja_appliquees,premier_log)                # Règles applicables
-    indices = analyse.get("indices",[])              # Indices des règles en question
+    analyse = scenario_check_web4_test(S, Rb,deja_appliquees,premier_log)                # Applicable rules
+    indices = analyse.get("indices",[])              # Indexes of the rules
     options = analyse.get("options",[])
     output = analyse.get("output","")
 
     session["resultat"]=resultat
     session["scenario"]=scenario
 
-    if len(indices)==0 and len(deja_appliquees) == 0:              # Si aucune règle n'est applicable est aucune règle n'a été appliquée, message d'erreur
+    if len(indices)==0 and len(deja_appliquees) == 0:              # If no rule is applicable and no rule has been applied, error message
         return render_template(html_file,
                                 No_rule = True,
                                 log="No log")
-    elif choice=="-1":              # génération d'une exception
+    elif choice=="-1":              # exception generation
             return render_template(html_file,
                                    extension = True,
                                    log=log)
@@ -322,7 +356,7 @@ def traiter():
                     regles_appliquees = [Rb.rules[i] for i in deja_appliquees],
                     situation_finale = [str(s) for s in S],
                     log=log)
-    elif choice=="-3":              # changement ou non de la base utilisée
+    elif choice=="-3":              # whether or not the base used has to be changed
         add_RB = request.form.get("add_RB", False)
         if add_RB == "True":
             i = 0
@@ -340,69 +374,115 @@ def traiter():
                                regles_appliquees = [Rb.rules[i] for i in deja_appliquees],
                                situation_finale = [str(s) for s in S],
                                log=log)
-    else:               # Si règles possibles, on transmet les choix 
-        # (si aucune règle possible on pourra alors demander un recap, ou chercher une exception à la dernière règle appliquée)
+    else:               # If rules are possible, choices are transmitted. 
+        # (if no rule is possible, we can then request a recap, or look for an exception to the last rule applied)
         log +="\n".join(output)
         pas_premier = True
+        no_choice = False
         if len(deja_appliquees)==0:
             pas_premier = False
+        if options == []:
+            no_choice = True
         return render_template(html_file,
-                                conflit=True,
-                                options=options,
-                                indices=indices,
-                                log=log,
-                                pas_premiere_regle=pas_premier)
+                               conflit=True,
+                               options=options,
+                               no_choice = no_choice,
+                               indices=indices,
+                               log=log,
+                               pas_premiere_regle=pas_premier)
 
 #------------------------------------------------------------------------------------------------------------------------#
 
 @app.route("/exceptions", methods=["POST"])
 def exception():
-    DISTANCE_METHODS = get_distance_method()
-    SELECTION_METHODS = get_selection_method()
+    """
+    Route to handle exceptions to rules.
+    Computes possible adaptations and displays them to the user.
+    Accepts POST only.
+    """
+
+    # ----------------------------
+    # Step 1: Retrieve method choices
+    # ----------------------------
+    DISTANCE_METHODS = get_distance_method()                 # available distance metrics (dict: label -> function)
+    SELECTION_METHODS = get_selection_method()              # available selection strategies (dict: label -> function)
+
+    # Get chosen method labels from form (fallback = first available option)
     dist_choice_label = request.form.get("distances", list(DISTANCE_METHODS.keys())[0]).strip()
     sel_choice_label = request.form.get("selection", list(SELECTION_METHODS.keys())[0])
+
+    # Map chosen labels to actual functions
     distance_method = DISTANCE_METHODS[dist_choice_label]
     selection_method = SELECTION_METHODS[sel_choice_label]
 
-    scenario = request.form.get('scenario', "").strip()
-    log = request.form.get("log", "")
-    seuil = request.form.get("seuil")
+    # ----------------------------
+    # Step 2: Gather user input and session state
+    # ----------------------------
+    scenario = request.form.get('scenario', "").strip()             # the current scenario being analyzed
+    log = request.form.get("log", "")               # log/history of actions
+    seuil = request.form.get("seuil")               # optional threshold parameter
 
-    deja_appliquees = session["appliquees"]
+    deja_appliquees = session["appliquees"]             # list of rules already applied
 
+    # ----------------------------
+    # Step 3: Build arguments for exception search
+    # ----------------------------
     if seuil is not None:
+        # if threshold is provided, include it as argument
         arguments = list([selection_method,seuil])
     else:
+        # otherwise only pass the selection method
         arguments = list([selection_method])
 
+    # ----------------------------
+    # Step 4: Initialize Rule Base (RB) with current state S
+    # ----------------------------
     resultat = request.form.get("resultat", "")
-    S = resultat.split(";")
-    Rb = init_RB(session)
-    Rb.init_S(S)
+    S = resultat.split(";")                  # situation is represented as list of propositions
+    Rb = init_RB(session)               # load current rule base
+    Rb.init_S(S)                # initialize with state S
 
+    # ----------------------------
+    # Step 5: Compute possible exceptions
+    # ----------------------------
+    # Find exception/adaptation candidates for the last applied rule
     choix_ex = choix_exception(distance_method, Rb, arguments,deja_appliquees[-1])
 
+    # If no adaptation found, return directly with message
     if choix_ex["options"] == []:
         log += choix_ex["output"]
         return render_template(
             html_file,
-            Pas_adaptation = True,
+            Pas_adaptation = True,              # flag in template: no adaptation available
             log = log)
 
-    
+    # ----------------------------
+    # Step 6: Build readable strings for adaptations
+    # ----------------------------
+    # We copy data to avoid mutating the original structures
     adaptations_string = copy.deepcopy(choix_ex["regles_adaptees"])
     adaptations_list = copy.deepcopy(choix_ex["regles_adaptees"])
+
+    # Iterate through each adapted rule and its exceptions
     for i,regle in enumerate(choix_ex["regles_adaptees"]):
         for j,exception in enumerate(regle) :
-            P,C = exception
+            P,C = exception             # Premises and Conclusion of the adapted rule
+
+            # Convert premises and conclusions into readable forms (lists + strings)
             P_list = [str(v) for v in P]
             C_list = [str(v) for v in C]
-            P_str = ' ^ '.join(str(s) for s in P)
-            C_str = ' ^ '.join(str(c) for c in C)
+            P_str = ' ^ '.join(str(s) for s in P)               # join premises with AND operator
+            C_str = ' ^ '.join(str(c) for c in C)               # same for conclusions
+
+            # Update string representation for display in template
             adaptations_string[i][j] = (f"{P_str} => {C_str}")
+            # Save structured lists for later reuse (stored in session)
             adaptations_list[i][j] = [P_list,C_list]
     session["adaptations"]=adaptations_list
 
+    # ----------------------------
+    # Step 7: Render template with results
+    # ----------------------------
     return render_template(
         html_file,
         resultat=resultat,
@@ -417,25 +497,41 @@ def exception():
 
 @app.route("/proposition", methods=["POST"])
 def proposition():
+    """
+    Route to handle user’s choice of proposed exception/adaptation.
+    Updates rule base and redirects to processing page.
+    Accepts POST only.
+    """
+
+    # ----------------------------
+    # Step 1: Retrieve form/session data
+    # ----------------------------
     scenario = request.form.get('scenario', "").strip()
     log = request.form.get("log", "")
 
-    choix = request.form.get("choix_exception")
-    deja_appliquees = session["appliquees"]
+    choix = request.form.get("choix_exception")             # user’s choice of exception (index pair "i|j" or -1)
+    deja_appliquees = session["appliquees"]                 # rules already applied
 
     resultat = request.form.get("resultat", "")
     S = resultat.split(";")
 
+    # ----------------------------
+    # Step 2: Case: user cancelled (choix == -1)
+    # ----------------------------
     if choix == "-1":
-        log +=f"\n \n {get_log(3)} "
+        log +=f"\n \n {get_log(3)} "                # Append cancellation log and redirect to traiter()
         return redirect(url_for(
                 "traiter",
                 scenario=scenario,
                 log=log,
                 resultat=resultat
             ))
+    
+    # ----------------------------
+    # Step 3: Case: user selected an exception/adaptation
+    # ----------------------------
     else:
-        session["new_rules"] = True
+        session["new_rules"] = True             # mark that new rules have been added (At the end, we will therefore propose creating a new Rule Base with these rules)
         i_str, j_str = choix.split("|")
         i = int(i_str)
         j = int(j_str)

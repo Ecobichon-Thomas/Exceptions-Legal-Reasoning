@@ -1,5 +1,3 @@
-cyclist cross_park earphones	>	forbidden
-cyclist cross_park earphones ~passersby	>	authorised
 vehicle cross_red_light	>	forbidden
 vehicle emergency cross_red_light	>	authorised
 vehicle cross_park	>	forbidden
