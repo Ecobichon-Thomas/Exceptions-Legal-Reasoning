@@ -17,8 +17,8 @@ The following Python libraries must be installed:
 
 ### LLM APIs
 You need to use at least one of those LLM APIs:
-- Mistral: create an account for the Mistral API on the section *La plateforme* of the [https://mistral.ai/fr/products/la-plateforme](Mistral website), then generate an API key,
-- Hugging Face: create an account on [https://huggingface.co](Hugging Face website), and generate a personal access token.
+- Mistral: create an account for the Mistral API on the section *La plateforme* of the [Mistral website](https://mistral.ai/fr/products/la-plateforme), then generate an API key,
+- Hugging Face: create an account on [Hugging Face website](https://huggingface.co), and generate a personal access token.
 
 To use your API keys, create a file named `cles_API.txt` in the project folder. Write the name of the API, followed by a colon and then the key as shown in the example bellow. Use the same names as in the example (names are case sensitive!):
 ```
