@@ -5,15 +5,15 @@ We have developed a system, based on prioritized default logic, for representing
 ## Dependencies
 ### Libraries
 The following Python libraries must be installed:
-- `numpy`,
-- `os`,
-- `flask`,
-- `mitralai`,
-- `huggingface_hub`
-- `werkzeug.utils`,
-- `shutil`,
-- `scipy.spatial`,
-- `copy`.
+- `numpy`, [information](https://numpy.org/install/),
+- `os`, [information](https://docs.python.org/3.13/library/os.html),
+- `flask`, [information](https://flask.palletsprojects.com/en/stable/installation/),
+- `mistralai`, [information](https://docs.mistral.ai/getting-started/clients/),
+- `huggingface_hub` [information](https://huggingface.co/docs/huggingface_hub/installation),
+- `werkzeug.utils`, [information](https://werkzeug.palletsprojects.com/en/stable/installation/),
+- `shutil`, [information](https://docs.python.org/3/library/shutil.html),
+- `scipy.spatial`, [information](https://scipy.org/install/),
+- `copy`, [information](https://docs.python.org/3/library/copy.html).
 
 ### LLM APIs
 You need to use at least one of those LLM APIs:
