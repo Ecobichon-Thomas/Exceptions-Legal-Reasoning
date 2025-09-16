@@ -3,6 +3,7 @@
 We have developed a system, based on prioritized default logic, for representing legal rules and their exceptions. Our system can help the law practitioner's reasoning in presence of scenarios that induce an exception to a rule. When there is no known exception to the rule *r1* for a scenario, the system can help the user to adapt the exception *r2'* to a general rule *r2*.
 
 ## Dependencies
+### Libraries
 The following Python libraries must be installed:
 - `numpy`,
 - `os`,
@@ -14,6 +15,7 @@ The following Python libraries must be installed:
 - `scipy.spatial`,
 - `copy`.
 
+### LLM APIs
 You need to use at least one of those LLM APIs:
 - Mistral: create an account for the Mistral API on the section *La plateforme* of the [https://mistral.ai/fr/products/la-plateforme](Mistral website), then generate an API key,
 - Hugging Face: create an account on [https://huggingface.co](Hugging Face website), and generate a personal access token.
