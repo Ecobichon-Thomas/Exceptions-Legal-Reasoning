@@ -37,4 +37,4 @@ python app.py
 
 ## Web Interface Usage
 
-Details on how to use the web interface are available in the [User_guide.pdf](User Guide).
+Details on how to use the web interface are available in the [User Guide](User_guide.pdf).
