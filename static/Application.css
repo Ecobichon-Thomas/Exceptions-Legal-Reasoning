@@ -44,7 +44,7 @@ input[type="submit"]:hover {
 main {
     padding: 1em;
     width: 100%;
-    margin: 0px;
+    margin: 0px;  
     background: white;
     box-shadow: 0 0 10px rgba(0,0,0,0.05);
     border-radius: 8px;
@@ -92,8 +92,13 @@ em {
 
 body{
     font-family: Arial, sans-serif;
+    margin: 0;
+    min-height: 100vh;
   background: var(--grey-100);
   color: var(--text);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 header{
@@ -126,6 +131,7 @@ header h1{
 }
 
 main{
+  flex: 1;
   display: block;
   width: 90%;
   margin: 24px auto;
@@ -433,4 +439,54 @@ hr.separator{
   border: none; height: 1px;
   background: #e6e6e6;
   margin: 16px 0;
+}
+
+a{
+  color: #fff;
+   margin-right: 10px;
+}
+
+footer{
+  background: linear-gradient(180deg, #46a8fb 0%, #3aa0f9 100%);
+  color: var(--white);
+  padding: 18px;       
+}
+
+.footer-container {
+  display: flex;
+  justify-content: space-between;
+  max-width: 900px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+
+footer h4 {
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.team {
+  margin-bottom: 10px;
+}
+
+footer a {
+  display: block;
+  color: var(--white);            
+  text-decoration: none;
+  margin-bottom: 6px;
+  transition: color 0.3s ease;
+}
+
+footer a:hover {
+  color: #1e3552;             
+  text-decoration: underline;
+}
+
+
+@media (max-width: 600px) {
+  .footer-container {
+    flex-direction: column;
+  }
 }

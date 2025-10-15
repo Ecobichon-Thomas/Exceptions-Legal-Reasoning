@@ -15,6 +15,11 @@ The following Python libraries must be installed:
 - `scipy.spatial`, [information](https://scipy.org/install/),
 - `copy`, [information](https://docs.python.org/3/library/copy.html).
 
+For install you can run:
+```
+ pip install -r requirements.txt
+```
+
 ### LLM APIs
 You need to use at least one of those LLM APIs:
 - Mistral: create an account for the Mistral API on the section *La plateforme* of the [Mistral website](https://mistral.ai/fr/products/la-plateforme), then generate an API key,

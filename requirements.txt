@@ -1,0 +1,6 @@
+flask
+flask-babel
+mistralai
+huggingface_hub
+werkzeug
+scipy
