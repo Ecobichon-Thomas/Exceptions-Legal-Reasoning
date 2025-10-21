@@ -9,6 +9,7 @@ from huggingface_hub import InferenceClient
 from werkzeug.utils import secure_filename
 import shutil
 import copy
+from waitress import serve
 
 # --------------------------------------------------
 # Flask app initialization
@@ -563,6 +564,7 @@ def proposition():
         ))
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    #app.run(debug=True)
+    serve(app, host="0.0.0.0", port=8080)
 
 #----------------------------------------------------------------------------------------------#

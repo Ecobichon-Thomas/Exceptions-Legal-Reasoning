@@ -3,4 +3,5 @@ flask-babel
 mistralai
 huggingface_hub
 werkzeug
+waitress
 scipy
